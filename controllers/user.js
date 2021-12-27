@@ -1,12 +1,13 @@
 const User = require('../models/user');
 const jwt = require('jsonwebtoken');
 const expressJwt = require('express-jwt');
+const { errorHandler } = require('../helpers/dbErrorHandler');
 
 
 exports.userById = (req, res, next, id) => {
     User.findById(id).exec((err, user) => {
         if(err || !user){
-            res.status(400).json({
+            return res.status(400).json({
                 error: "User Not Found"
             })
         }
@@ -16,32 +17,40 @@ exports.userById = (req, res, next, id) => {
 }
 
 exports.login = (req, res) => {
-    User.findOne({_id: req.body.email}).exec((err, user) => {
+    User.findOne({email: req.body.email}).exec((err, user) => {
         if(err || !user){
+            console.log("here");
             const u = new User({...req.body, balance:0});
-            u.save((err,us) => {
-                if(err || !us){
-                    res.status(400).json({
-                        error: "Unable to Register"
+            u.save(async(err,us) => {
+                if(err){
+                    return res.status(400).json({
+                        error: errorHandler(err)
                     })
                 }
                 const token = jwt.sign({_id: us._id}, process.env.JWT_SECRET);
-                res.json({
-                    token,
-                    user:us
-                });
-            })
-        }
-        if(user.activated===0){
-            res.status(400).json({
-                error: "Your Email is Locked"
+                res.cookie('t', token, {expire: new Date() + 9999})
+                await res.json({
+                        token,
+                        user:us
+                    });
             })
         }else{
-            const token = jwt.sign({_id: user._id}, process.env.JWT_SECRET);
-            res.json({
-                token,
-                user:user
-            });
+            if(user && user.activated===0){
+                return res.status(400).json({
+                    error: "Your Account is Locked"
+                })
+            }else if(user && user.activated===1){
+                const token = jwt.sign({_id: user._id}, process.env.JWT_SECRET);
+                res.cookie('t', token, {expire: new Date() + 9999})
+                return res.json({
+                    token,
+                    user:user
+                });
+            }else{
+                return res.status(500).json({
+                    error: 'SOMETHING WENT WRONG'
+                })
+            }
         }
     })
 }
