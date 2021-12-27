@@ -36,7 +36,7 @@ app.use("/api", userRoutes);
 
 
 app.get("/", (req, res) => {
-    res.send("BOHOT SUNDAR");
+    res.send("EVCHARGE BACKEND");
 })
 
 

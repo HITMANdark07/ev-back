@@ -14,7 +14,7 @@ const userSchema =  new mongoose.Schema({
     },
     balance:{
         type:Number,
-        default:0
+        default:0.00
     },
     email:{
         type:String,
