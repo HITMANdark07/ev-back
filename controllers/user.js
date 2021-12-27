@@ -19,7 +19,6 @@ exports.userById = (req, res, next, id) => {
 exports.login = (req, res) => {
     User.findOne({email: req.body.email}).exec((err, user) => {
         if(err || !user){
-            console.log("here");
             const u = new User({...req.body, balance:0});
             u.save(async(err,us) => {
                 if(err){
