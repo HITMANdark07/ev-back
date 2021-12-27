@@ -6,6 +6,9 @@ const cors = require('cors');
 const expressValidator = require('express-validator');
 require('dotenv').config();
 
+//require routes
+const userRoutes = require('./routes/user');
+
 
 // app
 const app = express();
@@ -20,13 +23,21 @@ mongoose.connect(`mongodb+srv://root:${process.env.DATABASE_PWD}@cluster0.nzqly.
     console.log("ERROR CONNECTION DATABSE",err);
 })
 
+// middlewares
 app.use(require('morgan')('dev'));
+app.use(bodyParser.json());
+app.use(cookieParser());
+app.use(expressValidator());
+app.use(cors());
+
+
+// route middlewares
+app.use("/api", userRoutes);
+
+
 app.get("/", (req, res) => {
     res.send("BOHOT SUNDAR KANYA");
 })
-
-
-
 
 
 const PORT = process.env.PORT || 8000;
