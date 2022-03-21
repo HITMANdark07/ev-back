@@ -1,6 +1,7 @@
 const User = require('../models/user');
 const jwt = require('jsonwebtoken');
 const expressJwt = require('express-jwt');
+const { OAuth2Client } = require('google-auth-library')
 const { errorHandler } = require('../helpers/dbErrorHandler');
 
 
@@ -16,22 +17,40 @@ exports.userById = (req, res, next, id) => {
     })
 }
 
+const clinet = new OAuth2Client(process.env.GOOGLE_CLIENT_ID)
+
 exports.login = (req, res) => {
     User.findOne({email: req.body.email}).exec((err, user) => {
         if(err || !user){
-            const u = new User({...req.body, balance:0});
-            u.save(async(err,us) => {
-                if(err){
+            const { idToken, name, photo } = req.body;
+            clinet.verifyIdToken({idToken, audience: process.env.GOOGLE_CLIENT_ID}).then(response => {
+                //console.log('GOOGLE LOGIN RESPONSE',response);
+                const {email_verified, email} = response.payload;
+                if(email_verified) {
+                            console.log(name, email, photo);
+                            const u = new User({name, email, photo, balance:0});
+                            u.save(async(err,us) => {
+                                if(err){
+                                    return res.status(400).json({
+                                        error: errorHandler(err)
+                                    })
+                                }
+                                const token = jwt.sign({_id: us._id}, process.env.JWT_SECRET);
+                                res.cookie('t', token, {expire: new Date() + 9999})
+                                await res.json({
+                                        token,
+                                        user:us
+                                    });
+                            })
+                } else{
                     return res.status(400).json({
-                        error: errorHandler(err)
+                        error: 'Google login failed, Try again'
                     })
                 }
-                const token = jwt.sign({_id: us._id}, process.env.JWT_SECRET);
-                res.cookie('t', token, {expire: new Date() + 9999})
-                await res.json({
-                        token,
-                        user:us
-                    });
+            }).catch(() => {
+                return res.status(400).json({
+                    error: "something went wrong"
+                })
             })
         }else{
             if(user && user.activated===0){
