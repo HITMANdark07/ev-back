@@ -28,7 +28,7 @@ const userSchema =  new mongoose.Schema({
     },
     role:{
         type:Number,
-        enum:[0,1],
+        enum:[0,1,2], // 0-> customer 1-> device_owner 2-> admin
         default:0
     },
     verified:{

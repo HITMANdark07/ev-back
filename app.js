@@ -8,7 +8,7 @@ require('dotenv').config();
 
 //require routes
 const userRoutes = require('./routes/user');
-
+const deviceRoutes = require('./routes/device');
 
 // app
 const app = express();
@@ -33,7 +33,7 @@ app.use(cors());
 
 // route middlewares
 app.use("/api", userRoutes);
-
+app.use("/api/device",deviceRoutes);
 
 app.get("/", (req, res) => {
     res.send("EVCHARGE BACKEND");
