@@ -9,7 +9,9 @@ exports.deviceValidator = (req, res, next) => {
     })
     const deviceSchema  = Joi.object({
         location: locationSchema,
-        owner: Joi.string().optional()
+        owner: Joi.string().optional(),
+        code: Joi.string().required(),
+        rate: Joi.number().required()
     })
 
     const { error } = deviceSchema.validate(req.body);

@@ -21,6 +21,16 @@ const DeviceSchema = mongoose.Schema({
     isDeleted:{
         type:Boolean,
         default:false
+    },
+    code:{
+        type:String,
+        trim:true,
+        required:true,
+        unique:true,
+    },
+    rate:{
+        type:Number,
+        default:0
     }
 },{
     timestamps:true

@@ -30,7 +30,7 @@ exports.list = (req, res) => {
     .limit(limit)
     .skip(skip)
     .exec((err,devices) => {
-        if(err || !carCategories){
+        if(err || !devices){
             return res.status(400).json({
                 message:"Unable to Fetch Devices"
             });
@@ -40,10 +40,12 @@ exports.list = (req, res) => {
 }
 
 exports.create = (req, res) => {
-    const {location , owner} = req.body;
+    const {location , owner,code,rate} = req.body;
     let device = new Device({
         location:location,
-        owner:owner
+        owner:owner,
+        code: code?.toUpperCase(),
+        rate:rate
     });
 
     device.save((err, device) => {
