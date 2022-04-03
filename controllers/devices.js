@@ -66,6 +66,7 @@ exports.create = (req, res) => {
             // console.log(code)
             let _qr = new Qr({
                 device:device._id,
+                code:device.code
             })
             _qr.image.data = new Buffer.from(code.split(",")[1],'base64');
             _qr.image.contentType = ((code.split(",")[0]).split(":")[1]).split(";")[0];
