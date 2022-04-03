@@ -17,6 +17,24 @@ exports.userById = (req, res, next, id) => {
     })
 }
 
+exports.list = (req, res) => {
+    let qry = req.query;
+    let limit = qry.limit || 10;
+    let skip = qry.skip || 0;
+    User.find()
+    .limit(limit)
+    .skip(skip)
+    .sort({"createdAt":-1})
+    .exec((err, users) => {
+        if(err || !users){
+            return res.status(400).json({
+                error: 'Failed to fetch Users'
+            })
+        }
+        return res.status(200).json(users);
+    })
+}
+
 const clinet = new OAuth2Client(process.env.GOOGLE_CLIENT_ID)
 
 exports.login = (req, res) => {

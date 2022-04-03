@@ -1,6 +1,7 @@
 const Device = require("../models/device")
 const qr = require('qrcode');
 const Qr = require("../models/qr");
+const { errorHandler } = require('../helpers/dbErrorHandler')
 
 exports.findById = (req,res, next, id) => {
     Device.findById(id)
@@ -51,7 +52,7 @@ exports.create = (req, res) => {
     device.save((err, device) => {
         if(err || !device){
             return res.status(400).json({
-                message:"Failed to save Device"
+                message:errorHandler(err)
             })
         }
         let data = {
