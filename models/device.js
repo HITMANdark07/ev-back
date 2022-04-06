@@ -22,6 +22,20 @@ const DeviceSchema = mongoose.Schema({
         type:Boolean,
         default:false
     },
+    private:{
+        type:Boolean,
+        default:false
+    },
+    status:{
+        type:Number,
+        enum:[1,0],
+        default:1
+    },
+    inuse:{
+        type:Boolean,
+        default:false
+    },
+    members:[],
     code:{
         type:String,
         trim:true,
