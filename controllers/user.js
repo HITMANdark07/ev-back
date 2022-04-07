@@ -18,10 +18,14 @@ exports.userById = (req, res, next, id) => {
 }
 
 exports.list = (req, res) => {
+    let q={};
     let qry = req.query;
     let limit = qry.limit || 10;
     let skip = qry.skip || 0;
-    User.find()
+    if(qry?.role){
+        q['role']=qry?.role;
+    }
+    User.find(q)
     .limit(limit)
     .skip(skip)
     .sort({"createdAt":-1})

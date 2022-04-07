@@ -1,9 +1,10 @@
 const Device = require("../models/device")
 const qr = require('qrcode');
 const Qr = require("../models/qr");
-const { errorHandler } = require('../helpers/dbErrorHandler')
+const { errorHandler } = require('../helpers/dbErrorHandler');
+const { calcDistance } = require("../utils");
 
-exports.findById = (req,res, next, id) => {
+exports.findDeviceById = (req,res, next, id) => {
     Device.findById(id)
     .exec((err, device) => {
         if(err || !device){
@@ -35,6 +36,9 @@ exports.list = (req, res) => {
             return res.status(400).json({
                 message:"Unable to Fetch Devices"
             });
+        }
+        if(qry?.lat && qry?.lng){
+            devices = devices.filter((device) => calcDistance(qry?.lat,qry?.lng,device.location.lat,device.location.lng)<15);
         }
         return res.json(devices);
     })
@@ -99,7 +103,7 @@ exports.update = (req, res) => {
     )
 }
 
-exports.delete = (req, res) => {
+exports.remove = (req, res) => {
     let device = req.device;
     device['isDeleted'] = true;
     device.save((err, dDevice) => {
