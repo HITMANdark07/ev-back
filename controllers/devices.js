@@ -95,7 +95,7 @@ exports.update = (req, res) => {
         (err, device) => {
             if(err || !device){
                 return res.status(400).json({
-                    error: "Unable to Update Device"
+                    message: errorHandler(err)
                 })
             }
             return res.json(device);
