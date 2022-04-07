@@ -27,6 +27,12 @@ exports.list = (req, res) => {
     let qry = req.query;
     let limit = qry.limit || 10;
     let skip = qry.skip || 0;
+    if(qry?.code){
+        q['code'] = {
+            $regex:`^${qry?.code}`,
+            $options:"gi"
+        }
+    }
     Device.find(q)
     .sort({"createdAt":-1})
     .limit(limit)
