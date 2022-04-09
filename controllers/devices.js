@@ -35,6 +35,7 @@ exports.list = (req, res) => {
     }
     Device.find(q)
     .sort({"createdAt":-1})
+    .populate('owner', '_id name role')
     .limit(limit)
     .skip(skip)
     .exec((err,devices) => {
