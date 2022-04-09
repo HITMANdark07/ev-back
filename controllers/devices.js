@@ -105,6 +105,7 @@ exports.update = (req, res) => {
                     message: errorHandler(err)
                 })
             }
+            device.populate('owner', '_id name email role');
             return res.json(device);
         }
     )
