@@ -9,7 +9,7 @@ exports.deviceValidator = (req, res, next) => {
     })
     const deviceSchema  = Joi.object({
         location: locationSchema,
-        owner: Joi.string().optional(),
+        owner: Joi.string().required(),
         code: Joi.string().required(),
         rate: Joi.number().required()
     })
@@ -17,7 +17,7 @@ exports.deviceValidator = (req, res, next) => {
     const { error } = deviceSchema.validate(req.body);
 
     if (error) {
-        res.status(400).json({
+        return res.status(400).json({
             message: error.message
         });
     }

@@ -88,7 +88,17 @@ exports.create = (req, res) => {
                         message:"QR Saving Failed"
                     })
                 }
-                return res.status(200).json(device);
+                Device.findById(device._id)
+                .populate('owner','_id name email role')
+                .exec((err, device) => {
+                    if(err || !device){
+                        return res.status(400).json({
+                            message: "Error in Getting device"
+                        })
+                    }
+                    return res.status(200).json(device);
+                })
+                
             })
         })
     })
@@ -98,17 +108,16 @@ exports.update = (req, res) => {
     Device.findByIdAndUpdate(
         {_id: req.device._id},
         {$set : req.body},
-        {new: true},
-        (err, device) => {
-            if(err || !device){
-                return res.status(400).json({
-                    message: errorHandler(err)
-                })
-            }
-            device.populate('owner', '_id name email role');
-            return res.json(device);
+        {new: true},  
+    ).populate('owner',' _id name email role')
+    .exec((err, device) => {
+        if(err || !device){
+            return res.status(400).json({
+                message: errorHandler(err)
+            })
         }
-    )
+        return res.json(device);
+    })
 }
 
 exports.remove = (req, res) => {

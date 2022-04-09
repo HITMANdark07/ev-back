@@ -17,6 +17,7 @@ const DeviceSchema = mongoose.Schema({
     owner:{
         type:ObjectId,
         ref:'User',
+        required:true
     },
     isDeleted:{
         type:Boolean,
