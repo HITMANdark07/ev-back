@@ -39,6 +39,31 @@ exports.list = (req, res) => {
     })
 }
 
+
+exports.search = (req, res) => {
+    let q={isDeleted:false};
+    let qry = req.query;
+    if(qry?.email){
+        q['email'] = {
+            $regex:`^${qry?.email}`,
+            $options:"gi"
+        }
+    }
+    if(qry?.role){
+        q['role']=qry?.role;
+    }
+    User.find(q)
+    .sort({"createdAt":-1})
+    .exec((err, users) => {
+        if(err || !users){
+            return res.status(400).json({
+                error: 'Failed to fetch Users'
+            })
+        }
+        return res.status(200).json(users);
+    })
+}
+
 const clinet = new OAuth2Client(process.env.GOOGLE_CLIENT_ID)
 
 exports.login = (req, res) => {
