@@ -31,6 +31,12 @@ const userSchema =  new mongoose.Schema({
         enum:[0,1,2], // 0 -> customer //  1-> device_owner // 2-> admin
         default:0
     },
+    phone:{
+        type:Number,
+    },
+    otp:{
+        type:Number,
+    },
     verified:{
         type:Number,
         enum:[0,1],

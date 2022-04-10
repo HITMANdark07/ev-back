@@ -4,6 +4,11 @@ const expressJwt = require('express-jwt');
 const { OAuth2Client } = require('google-auth-library')
 const { errorHandler } = require('../helpers/dbErrorHandler');
 
+// Twilio Credentials
+const accountSid = process.env.TWILIO_ACCOUNT_SID;
+const authToken = process.env.TWILIO_AUTH_TOKEN;
+const phoneNumber = process.env.TWILIO_NUMBER;
+const client = require('twilio')(accountSid, authToken);
 
 exports.userById = (req, res, next, id) => {
     User.findById(id).exec((err, user) => {
@@ -36,6 +41,91 @@ exports.list = (req, res) => {
             })
         }
         return res.status(200).json(users);
+    })
+}
+
+function generateOTP() {
+    var digits = '0123456789';
+    let OTP = '';
+    for (let i = 0; i < 6; i++ ) {
+        OTP += digits[Math.floor(Math.random() * 10)];
+    }
+    return OTP;
+}
+
+exports.setOtp = (req, res) => {
+    let { user, phone } = req.body;
+    let newOtp = generateOTP();
+    User.findById(user).exec((err, user) => {
+        if(err || !user){
+            return res.status(400).json({
+                message: errorHandler(err)
+            })
+        }
+        user.otp = newOtp;
+        user.save((err, user) => {
+            if(err || !user){
+                return res.status(400).json({
+                    message: errorHandler(err)
+                })
+            }
+            //twilio send Sms
+            client.messages
+            .create({body: `Hey ${user.name}, Your Verification Code is ${newOtp}`, 
+            from: phoneNumber, to: `+91${phone}`})
+            .then((response) => {
+                return res.status(200).json({
+                    message:`OTP Sent from ${response.from}`
+                })
+            }).catch((err) => {
+                return res.status(400).json({
+                    message: `OTP Sending Failed`
+                })
+            })
+            
+        })
+    })
+}
+
+exports.verifyOtp = (req, res) => {
+    let { user, phone, code} = req.body;
+    User.findById(user).exec((err, user) => {
+        if(err || !user){
+            return res.status(400).json({
+                message:errorHandler(err)
+            })
+        }
+        if(user.otp==code){
+            user.phone=phone;
+            user.verified=1;
+            user.save((err, user) => {
+                if(err || !user){
+                    return res.status(400).json({
+                        message:errorHandler(err)
+                    })
+                }
+                const { _id, name , email , phone, activated,photo, balance, role, verified} = user;
+                const token = jwt.sign({_id:_id}, process.env.JWT_SECRET);
+                return res.status(200).json({
+                    token,
+                    user:{
+                        _id,
+                        name,
+                        email,
+                        phone,
+                        activated,
+                        photo,
+                        balance,
+                        role,
+                        verified
+                    }
+                })
+            })
+        }else{
+            return res.status(400).json({
+                message:'Verification Failed'
+            })
+        }
     })
 }
 
