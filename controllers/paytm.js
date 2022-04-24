@@ -57,6 +57,7 @@ exports.generateChecksum = (req, res, next) => {
             custId    : user,
         },
     }
+    console.log(paytmParams);
     req.paytmParams = paytmParams;
     PaytmChecksum.generateSignature(JSON.stringify(paytmParams),process.env.PAYTM_MERCHANT_KEY).then((checksum) => {
         req.checksum = checksum;
