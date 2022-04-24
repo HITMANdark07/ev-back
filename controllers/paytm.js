@@ -57,7 +57,6 @@ exports.generateChecksum = (req, res, next) => {
             custId    : user,
         },
     }
-    console.log(paytmParams);
     req.paytmParams = paytmParams;
     PaytmChecksum.generateSignature(JSON.stringify(paytmParams),process.env.PAYTM_MERCHANT_KEY).then((checksum) => {
         req.checksum = checksum;
@@ -96,62 +95,40 @@ exports.initiateTransaction = (req, res) => {
 
 exports.updateStatus = async(req, res) => {
     const { orderId, checksum, success, amount} = req.body;
-    console.log(req.body);
     try{  
         const order = await Order.findById(orderId);
-        const paytmParams = {
-            requestType   : "Payment",
-            mid           : `${process.env.PAYTM_MERCHANT_ID}`,
-            websiteName   : "WEBSTAGING",
-            orderId       : order._id,
-            callbackUrl   : "https://securegw-stage.paytm.in/theia/paytmCallback?ORDER_ID="+order._id,
-            txnAmount     : {
-                value     : parseFloat(amount).toFixed(2),
-                currency  : "INR",
-            },
-            userInfo      : {
-                custId    : order.user,
-            },
-        }
-        console.log(paytmParams);
-        var isVerifySignature = PaytmChecksum.verifySignature(JSON.stringify(paytmParams), process.env.PAYTM_MERCHANT_KEY, checksum);
-        console.log(isVerifySignature);
-        if(isVerifySignature){
-            if(success){
-                order.status="SUCCESS";
-                await order.save();
-                const user = await User.findById(order.user);
-                user.balance = user.balance+Number(amount);
-                user.save(async(err,user) => {
-                    if(err){
-                        return res.status(400).json({
-                            error: errorHandler(err)
-                        })
-                    }
-                    const token = jwt.sign({_id: user._id}, process.env.JWT_SECRET);
-                    res.cookie('t', token, {expire: new Date() + 9999})
-                    await res.json({
-                            token,
-                            user:user
-                        });
-                })
-            }else{
-                order.status="FAIL";
-                await order.save();
-                const user = await User.findById(order.user);
+    
+        if(success){
+            order.status="SUCCESS";
+            await order.save();
+            const user = await User.findById(order.user);
+            user.balance = user.balance+Number(amount);
+            user.save(async(err,user) => {
+                if(err){
+                    return res.status(400).json({
+                        error: errorHandler(err)
+                    })
+                }
                 const token = jwt.sign({_id: user._id}, process.env.JWT_SECRET);
                 res.cookie('t', token, {expire: new Date() + 9999})
                 await res.json({
                         token,
                         user:user
                     });
-            }
-
-        }else{
-            return res.status(400).json({
-                message: `Checksum verification failed`
             })
+        }else{
+            order.status="FAIL";
+            await order.save();
+            const user = await User.findById(order.user);
+            const token = jwt.sign({_id: user._id}, process.env.JWT_SECRET);
+            res.cookie('t', token, {expire: new Date() + 9999})
+            await res.json({
+                    token,
+                    user:user
+                });
         }
+
+        
     }catch(err){
         console.log(err);
         return res.status(400).json({
