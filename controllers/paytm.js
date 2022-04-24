@@ -102,6 +102,7 @@ exports.updateStatus = async(req, res) => {
             mid           : `${process.env.PAYTM_MERCHANT_ID}`,
             orderId       : orderId,
         }
+        console.log(paytmParams)
         var isVerifySignature = PaytmChecksum.verifySignature(JSON.stringify(paytmParams), process.env.PAYTM_MERCHANT_KEY, checksum);
         console.log(isVerifySignature);
         if(isVerifySignature){
