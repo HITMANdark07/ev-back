@@ -95,6 +95,7 @@ exports.initiateTransaction = (req, res) => {
 
 exports.updateStatus = async(req, res) => {
     const { orderId, checksum, success, amount} = req.body;
+    console.log(req.body);
     try{  
         const order = await Order.findById(orderId);
         const paytmParams = {
@@ -112,6 +113,7 @@ exports.updateStatus = async(req, res) => {
             },
         }
         var isVerifySignature = PaytmChecksum.verifySignature(paytmParams, process.env.PAYTM_MERCHANT_KEY, checksum);
+        console.log(isVerifySignature);
         if(isVerifySignature){
             if(success){
                 order.status="SUCCESS";
