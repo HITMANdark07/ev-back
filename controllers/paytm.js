@@ -99,10 +99,20 @@ exports.updateStatus = async(req, res) => {
     try{  
         const order = await Order.findById(orderId);
         const paytmParams = {
+            requestType   : "Payment",
             mid           : `${process.env.PAYTM_MERCHANT_ID}`,
+            websiteName   : "WEBSTAGING",
             orderId       : orderId,
+            callbackUrl   : "https://securegw-stage.paytm.in/theia/paytmCallback?ORDER_ID="+orderId,
+            txnAmount     : {
+                value     : amount,
+                currency  : "INR",
+            },
+            userInfo      : {
+                custId    : order.user,
+            },
         }
-        console.log(paytmParams,process.env.PAYTM_MERCHANT_KEY,checksum);
+        console.log(paytmParams);
         var isVerifySignature = PaytmChecksum.verifySignature(JSON.stringify(paytmParams), process.env.PAYTM_MERCHANT_KEY, checksum);
         console.log(isVerifySignature);
         if(isVerifySignature){
