@@ -46,7 +46,7 @@ exports.generateChecksum = (req, res, next) => {
         mid           : `${process.env.PAYTM_MERCHANT_ID}`,
         websiteName   : "WEBSTAGING",
         orderId       : _id,
-        callbackUrl   : "https://evcharge-back.herokuapp.com/api/transaction/status",
+        callbackUrl   : "https://securegw-stage.paytm.in/theia/paytmCallback?ORDER_ID="+_id,
         txnAmount     : {
             value     : amount,
             currency  : "INR",
