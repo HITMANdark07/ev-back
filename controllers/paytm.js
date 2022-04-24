@@ -103,8 +103,8 @@ exports.updateStatus = async(req, res) => {
             requestType   : "Payment",
             mid           : `${process.env.PAYTM_MERCHANT_ID}`,
             websiteName   : "WEBSTAGING",
-            orderId       : orderId,
-            callbackUrl   : "https://securegw-stage.paytm.in/theia/paytmCallback?ORDER_ID="+orderId,
+            orderId       : order._id,
+            callbackUrl   : "https://securegw-stage.paytm.in/theia/paytmCallback?ORDER_ID="+order._id,
             txnAmount     : {
                 value     : parseFloat(amount).toFixed(2),
                 currency  : "INR",
