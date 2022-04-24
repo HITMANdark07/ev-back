@@ -50,7 +50,7 @@ exports.generateChecksum = (req, res, next) => {
         orderId       : _id,
         callbackUrl   : "https://securegw-stage.paytm.in/theia/paytmCallback?ORDER_ID="+_id,
         txnAmount     : {
-            value     : amount,
+            value     : parseFloat(amount).toFixed(2),
             currency  : "INR",
         },
         userInfo      : {
@@ -106,7 +106,7 @@ exports.updateStatus = async(req, res) => {
             orderId       : orderId,
             callbackUrl   : "https://securegw-stage.paytm.in/theia/paytmCallback?ORDER_ID="+orderId,
             txnAmount     : {
-                value     : amount,
+                value     : parseFloat(amount).toFixed(2),
                 currency  : "INR",
             },
             userInfo      : {
