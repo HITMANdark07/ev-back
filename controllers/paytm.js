@@ -109,7 +109,7 @@ exports.updateStatus = async(req, res) => {
                 currency  : "INR",
             },
             userInfo      : {
-                custId    : order.user,
+                custId    : String(order.user),
             },
         }
         console.log(paytmParams);
