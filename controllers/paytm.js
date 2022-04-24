@@ -92,7 +92,7 @@ exports.initiateTransaction = (req, res) => {
 }
 
 exports.updateStatus = (req, res) => {
-    console.log(req.body);
+    console.log(req);
     res.status(200).json({
         success:true
     })
