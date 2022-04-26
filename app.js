@@ -10,6 +10,7 @@ require('dotenv').config();
 const userRoutes = require('./routes/user');
 const deviceRoutes = require('./routes/device');
 const paytmRoutes = require('./routes/paytm');
+const trasactionRoutes = require('./routes/transaction');
 
 // app
 const app = express();
@@ -36,6 +37,7 @@ app.use(cors());
 app.use("/api", userRoutes);
 app.use("/api/device",deviceRoutes);
 app.use("/api/transaction",paytmRoutes);
+app.use("/api/transactions",trasactionRoutes);
 
 app.get("/", (req, res) => {
     res.send("EVCHARGE BACKEND");
