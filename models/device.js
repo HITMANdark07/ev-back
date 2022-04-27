@@ -23,6 +23,19 @@ const DeviceSchema = mongoose.Schema({
         type:Boolean,
         default:false
     },
+    device_type:{
+        type:String,
+        default:'GSM',
+        enum:['GSM','WIFI']
+    },
+    api:{
+        type:String,
+        trim:true
+    },
+    gsm:{
+        type:String,
+        trim:true
+    },
     private:{
         type:Boolean,
         default:false

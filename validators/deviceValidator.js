@@ -10,6 +10,9 @@ exports.deviceValidator = (req, res, next) => {
     const deviceSchema  = Joi.object({
         location: locationSchema,
         owner: Joi.string().required(),
+        gsm:Joi.string().optional(),
+        api:Joi.string().optional(),
+        device_type:Joi.string().valid('GSM','WIFI'),
         code: Joi.string().required(),
         rate: Joi.number().required()
     })
