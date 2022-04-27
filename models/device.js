@@ -13,6 +13,12 @@ const LocationSchema = mongoose.Schema({
 },{ timestamps: true});
 
 const DeviceSchema = mongoose.Schema({
+    code:{
+        type:String,
+        trim:true,
+        required:true,
+        unique:true,
+    },
     location:LocationSchema,
     owner:{
         type:ObjectId,
@@ -50,12 +56,6 @@ const DeviceSchema = mongoose.Schema({
         default:false
     },
     members:[],
-    code:{
-        type:String,
-        trim:true,
-        required:true,
-        unique:true,
-    },
     rate:{
         type:Number,
         default:0
