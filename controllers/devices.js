@@ -52,13 +52,17 @@ exports.list = (req, res) => {
 }
 
 exports.create = (req, res) => {
-    const {location , owner,code,rate} = req.body;
-    let device = new Device({
-        location:location,
-        owner:owner,
-        code: code?.toUpperCase(),
-        rate:rate
-    });
+    const {location , owner,code,rate, device_type,gsm,api} = req.body;
+    let data={
+        code:code?.toUpperCase(),
+        rate,
+        location,
+        owner,
+        device_type
+    };
+    if(gsm) data['gsm'] = gsm;
+    if(api) data['api'] = api;
+    let device = new Device(data);
 
     device.save((err, device) => {
         if(err || !device){
