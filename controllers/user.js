@@ -22,7 +22,7 @@ exports.userById = (req, res, next, id) => {
     })
 }
 
-exports.list = (req, res) => {
+exports.list = async(req, res) => {
     let q={};
     let qry = req.query;
     let limit = qry.limit || 10;
@@ -30,9 +30,10 @@ exports.list = (req, res) => {
     if(qry?.role){
         q['role']=qry?.role;
     }
+    let total = await User.countDocuments({});
     User.find(q)
-    .limit(limit)
-    .skip(skip)
+    .limit(parseInt(limit))
+    .skip(parseInt(skip))
     .sort({"createdAt":-1})
     .exec((err, users) => {
         if(err || !users){
@@ -40,7 +41,10 @@ exports.list = (req, res) => {
                 error: 'Failed to fetch Users'
             })
         }
-        return res.status(200).json(users);
+        return res.status(200).json({
+            total:total,
+            users:users
+        });
     })
 }
 
