@@ -38,6 +38,29 @@ exports.create = async(req , res) => {
     return res.status(200).json(response);
 }
 
+exports.list = async(req, res) => {
+    const { limit, skip} = req.query;
+    const lim = parseInt(limit) || 10;
+    const skp = parseInt(skip) || 0;
+    let count = await WithdrawlRequest.countDocuments({})
+    WithdrawlRequest.find({})
+    .populate("user","name email phone")
+    .sort({"createdAt":-1})
+    .limit(lim)
+    .skip(skp)
+    .exec((err, wReqs) => {
+        if(err || !wReqs){
+            return res.status(400).json({
+                message: errorHandler(err)
+            })
+        }
+        res.status(200).json({
+            total:count,
+            withdrawlRequests:wReqs
+        })
+    })
+}
+
 exports.updateStatus = async(req, res) => {
     const {status} = req.body;
     let WReq = req.WReq;
