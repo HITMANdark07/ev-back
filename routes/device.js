@@ -1,10 +1,11 @@
 const router = require('express').Router();
 
-const { create, readQr,findQrByDevice, list, findDeviceById, update, remove, listDevicesByUser } = require('../controllers/devices');
+const { create, readQr,findQrByDevice, list, findDeviceById, update, remove, listDevicesByUser, read } = require('../controllers/devices');
 const { userById }  = require('../controllers/user');
 const { deviceValidator } = require('../validators/deviceValidator');
 
 router.post("/create", deviceValidator , create);
+router.get("/get/:deviceId", read);
 router.get("/list",list);
 router.get("/list/:userId", listDevicesByUser);
 router.get("/qr/image/:qrDevice", readQr);
