@@ -36,8 +36,8 @@ exports.list = (req, res) => {
     Device.find(q)
     .sort({"createdAt":-1})
     .populate('owner', '_id name email role')
-    .limit(limit)
-    .skip(skip)
+    .limit(parseInt(limit))
+    .skip(parseInt(skip))
     .exec((err,devices) => {
         if(err || !devices){
             return res.status(400).json({
@@ -46,6 +46,26 @@ exports.list = (req, res) => {
         }
         if(qry?.lat && qry?.lng){
             devices = devices.filter((device) => calcDistance(qry?.lat,qry?.lng,device.location.lat,device.location.lng)<15);
+        }
+        return res.json(devices);
+    })
+}
+
+exports.listDevicesByUser = (req, res) => {
+    let q = {isDeleted:false,owner:req.profile._id};
+    let qry = req.query;
+    let limit = qry.limit || 10;
+    let skip = qry.skip || 0;
+    Device.find(q)
+    .sort({"createdAt":-1})
+    .populate('owner', '_id name email role')
+    .limit(parseInt(limit))
+    .skip(parseInt(skip))
+    .exec((err,devices) => {
+        if(err || !devices){
+            return res.status(400).json({
+                message:"Unable to Fetch Devices"
+            });
         }
         return res.json(devices);
     })

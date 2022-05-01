@@ -45,6 +45,30 @@ exports.list = async(req, res) => {
         })
     })
 }
+
+exports.listChargeByUser = async(req, res) => {
+    const { limit, skip} = req.query;
+    const lim = parseInt(limit) || 10;
+    const skp = parseInt(skip) || 0;
+    let count = await Charge.countDocuments({user:req.profile._id})
+    Charge.find({user:req.profile._id})
+    .populate("user","name email phone")
+    .populate("device","code location device_type")
+    .sort({"createdAt":-1})
+    .limit(lim)
+    .skip(skp)
+    .exec((err, chargings) => {
+        if(err || !chargings){
+            return res.status(400).json({
+                message: errorHandler(err)
+            })
+        }
+        res.status(200).json({
+            total:count,
+            chargings:chargings
+        })
+    })
+}
 exports.create = async(req, res) => {
     const {device, user,amount, time} = req.body;
     const chargeDoc = new Charge({
