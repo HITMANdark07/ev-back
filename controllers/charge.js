@@ -124,7 +124,9 @@ exports.confirm = async(req,res) => {
                 }
                 return res.status(200).json({
                     status:"SUCCESS",
-                    message:"Confirmed Charging"
+                    message:"Confirmed Charging",
+                    time:chargingDoc.time,
+                    device:chargingDoc.device
                 })
             })
         })
