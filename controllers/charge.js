@@ -75,7 +75,7 @@ exports.create = async(req, res) => {
         device,
         user,
         amount,
-        time
+        time: new Date(Date.now()+time)
     });
     chargeDoc.save((err, charged) => {
         if(err || !charged){
