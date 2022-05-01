@@ -14,7 +14,11 @@ const ChargeSChema = mongoose.Schema({
     status:{
         type:String,
         enum:['CHARGING','CHARGED'],
-        default:1
+        default:'CHARGING'
+    },
+    confirm:{
+        type:Boolean,
+        default:false
     },
     amount:{
         type:Number,
@@ -24,10 +28,9 @@ const ChargeSChema = mongoose.Schema({
         type:Number,
         default:0
     },
-    powerUsed:{
-        type:Number,
-        required:true,
-    }
+    // powerUsed:{
+    //     type:Number,
+    // }
 },{
     timestamps:true
 });

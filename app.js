@@ -11,6 +11,8 @@ const userRoutes = require('./routes/user');
 const deviceRoutes = require('./routes/device');
 const paytmRoutes = require('./routes/paytm');
 const trasactionRoutes = require('./routes/transaction');
+const withdrawlRequestRoutes = require('./routes/withdrawlReq');
+const chargeRoutes = require('./routes/charge');
 
 // app
 const app = express();
@@ -38,6 +40,8 @@ app.use("/api", userRoutes);
 app.use("/api/device",deviceRoutes);
 app.use("/api/transaction",paytmRoutes);
 app.use("/api/transactions",trasactionRoutes);
+app.use("/api/withdrawl",withdrawlRequestRoutes);
+app.use("/api/charge",chargeRoutes);
 
 app.get("/", (req, res) => {
     res.send("EVCHARGE BACKEND");
