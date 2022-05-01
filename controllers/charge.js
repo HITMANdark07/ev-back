@@ -104,7 +104,7 @@ exports.confirm = async(req,res) => {
     Charge.findOne({device:deviceId, user:userId, confirm:false}).exec((err,chargingDoc) => {
         if(err || !chargingDoc){
             return res.status(400).json({
-                message:errorHandler(err)
+                message:"Please Try Again"
             })
         }
         chargingDoc.confirm=true;
