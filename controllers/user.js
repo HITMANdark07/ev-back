@@ -21,7 +21,24 @@ exports.userById = (req, res, next, id) => {
         next();
     })
 }
-
+exports.getProfile = (req, res) => {
+    const { _id, name , email , phone, activated,photo, balance, role, verified} = req.profile;
+    const token = jwt.sign({_id:_id}, process.env.JWT_SECRET);
+    return res.status(200).json({
+        token,
+        user:{
+            _id,
+            name,
+            email,
+            phone,
+            activated,
+            photo,
+            balance,
+            role,
+            verified
+        }
+    })
+}
 exports.list = async(req, res) => {
     let q={};
     let qry = req.query;
