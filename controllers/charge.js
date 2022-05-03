@@ -2,6 +2,7 @@ const Charge = require("../models/charge");
 const Device = require("../models/device");
 const User = require('../models/user');
 const { errorHandler } = require('../helpers/dbErrorHandler');
+const device = require("../models/device");
 
 const updateStatus = (deviceId, chargeId) => {
     Charge.findByIdAndUpdate(chargeId,{
@@ -101,6 +102,7 @@ exports.create = async(req, res) => {
 
 exports.confirm = async(req,res) => {
     const {deviceId, userId} = req.body;
+    const device = await Device.findById(deviceId);
     Charge.findOne({device:deviceId, user:userId, confirm:false}).exec((err,chargingDoc) => {
         if(err || !chargingDoc){
             return res.status(400).json({
@@ -122,11 +124,20 @@ exports.confirm = async(req,res) => {
                         message:errorHandler(err)
                     })
                 }
-                return res.status(200).json({
-                    status:"SUCCESS",
-                    message:"Confirmed Charging",
-                    time:chargingDoc.time,
-                    device:chargingDoc.device
+                User.findByIdAndUpdate(device.owner,{
+                    $inc:{balance: chargingDoc.amount}
+                },(err, owner) => {
+                    if(err || !owner){
+                        return res.status(400).json({
+                            message:errorHandler(err)
+                        })
+                    }
+                    return res.status(200).json({
+                        status:"SUCCESS",
+                        message:"Confirmed Charging",
+                        time:chargingDoc.time,
+                        device:chargingDoc.device
+                    })
                 })
             })
         })
