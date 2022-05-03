@@ -38,12 +38,17 @@ exports.create = async(req , res) => {
     return res.status(200).json(response);
 }
 
+
 exports.list = async(req, res) => {
-    const { limit, skip} = req.query;
+    const { limit, skip, user} = req.query;
     const lim = parseInt(limit) || 10;
     const skp = parseInt(skip) || 0;
-    let count = await WithdrawlRequest.countDocuments({})
-    WithdrawlRequest.find({})
+    let q = {};
+    if(user){
+        q['user']= user;
+    }
+    let count = await WithdrawlRequest.countDocuments(q)
+    WithdrawlRequest.find(q)
     .populate("user","name email phone")
     .sort({"createdAt":-1})
     .limit(lim)
