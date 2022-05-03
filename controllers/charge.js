@@ -125,7 +125,7 @@ exports.confirm = async(req,res) => {
                     })
                 }
                 User.findByIdAndUpdate(device.owner,{
-                    $inc:{balance: chargingDoc.amount}
+                    $inc:{balance: Number(chargingDoc.amount)*0.8}
                 },(err, owner) => {
                     if(err || !owner){
                         return res.status(400).json({
