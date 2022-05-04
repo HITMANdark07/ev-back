@@ -54,8 +54,7 @@ exports.generateChecksum = (req, res, next) => {
             currency  : "INR",
         },
         enablePaymentMode:[{
-            mode:"UPI",
-            channels:["UPIPUSH"]
+            mode:"UPI"
         }],
         userInfo      : {
             custId    : user,
