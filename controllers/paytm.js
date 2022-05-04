@@ -53,9 +53,6 @@ exports.generateChecksum = (req, res, next) => {
             value     : parseFloat(amount).toFixed(2),
             currency  : "INR",
         },
-        enablePaymentMode:[{
-            mode:"UPI"
-        }],
         userInfo      : {
             custId    : user,
         },
