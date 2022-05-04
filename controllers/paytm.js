@@ -48,7 +48,7 @@ exports.generateChecksum = (req, res, next) => {
         mid           : `${process.env.PAYTM_MERCHANT_ID}`,
         websiteName   : "WEBSTAGING",
         orderId       : _id,
-        callbackUrl   : "https://securegw-stage.paytm.in/theia/paytmCallback?ORDER_ID="+_id,
+        callbackUrl   : process.env.PAYTM_CALLBACK_STAGING_URL+_id,
         txnAmount     : {
             value     : parseFloat(amount).toFixed(2),
             currency  : "INR",
