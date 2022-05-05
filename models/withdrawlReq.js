@@ -12,6 +12,9 @@ const WithdrawlRequestSchema = mongoose.Schema({
         enum:['PENDING','SUCCESS', 'FAIL'],
         default:'PENDING'
     },
+    bankName:{
+        type:String,
+    },
     accountNumber:{
         type:String,
     },
