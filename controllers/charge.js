@@ -72,12 +72,19 @@ exports.listChargeByUser = async(req, res) => {
 }
 exports.create = async(req, res) => {
     const {device, user,amount, time} = req.body;
+    const alreadyReq = await Charge.find({device:device,user:user,status:'CHARGING'});
+    if(alreadyReq){
+        return res.status(400).json({
+            message:"Already a request is pending"
+        })
+    }
     const chargeDoc = new Charge({
         device,
         user,
         amount,
         time: new Date(Date.now()+time)
     });
+    console.log(chargeDoc);
     chargeDoc.save((err, charged) => {
         if(err || !charged){
             return res.status(400).json({
