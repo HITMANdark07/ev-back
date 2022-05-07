@@ -4,6 +4,13 @@ const User = require('../models/user');
 const { errorHandler } = require('../helpers/dbErrorHandler');
 const device = require("../models/device");
 
+// Twilio Credentials
+const accountSid = process.env.TWILIO_ACCOUNT_SID;
+const authToken = process.env.TWILIO_AUTH_TOKEN;
+const phoneNumber = process.env.TWILIO_NUMBER;
+const client = require('twilio')(accountSid, authToken);
+
+
 const updateStatus = (deviceId, chargeId) => {
     Charge.findByIdAndUpdate(chargeId,{
         status:'CHARGED',
@@ -69,6 +76,33 @@ exports.listChargeByUser = async(req, res) => {
             chargings:chargings
         })
     })
+}
+exports.sendMessage = async(req, res) => {
+    const { user, device, time} = req.body;
+    const dvc = await Device.findById(device);
+    if(!dvc.gsm){
+        return res.status(400).json({
+            message:'Device is not of type GSM'
+        })
+    }
+    let total = Number(((Number(time)/60000)*dvc.rate).toFixed(2));
+    let msgBody = `"{\"device\":\"${device}\",\"user\":\"${user}\",\"amount\":\"${total}\",\"time\":${time}}"`;
+    //twilio send Sms
+    client.messages
+    .create({body: msgBody, 
+    from: phoneNumber, to: `+91${dvc.gsm}`})
+    .then((response) => {
+        return res.status(200).json({
+            message:`OTP Sent Success`,
+            success:true,
+        })
+    }).catch((err) => {
+        return res.status(400).json({
+            message: `OTP Sending Failed`,
+            success:false,
+        })
+    })
+
 }
 exports.create = async(req, res) => {
     const {device, user,amount, time} = req.body;
