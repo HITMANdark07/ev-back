@@ -56,7 +56,7 @@ exports.generateChecksum = (req, res, next) => {
         userInfo      : {
             custId    : user,
         },
-        enablePaymentMode:[{mode : "UPI", channels : ["UPIPUSH"]}]
+        enablePaymentMode:[{mode : "UPI"}]
     }
     req.paytmParams = paytmParams;
     PaytmChecksum.generateSignature(JSON.stringify(paytmParams),process.env.PAYTM_MERCHANT_KEY).then((checksum) => {
