@@ -46,9 +46,9 @@ exports.generateChecksum = (req, res, next) => {
     const paytmParams = {
         requestType   : "Payment",
         mid           : `${process.env.PAYTM_MERCHANT_ID}`,
-        websiteName   : "WEBSTAGING",
+        websiteName   : "EROEV",
         orderId       : _id,
-        callbackUrl   : process.env.PAYTM_CALLBACK_STAGING_URL+_id,
+        callbackUrl   : process.env.PAYTM_CALLBACK_PRODUCTION_URL+_id,
         txnAmount     : {
             value     : parseFloat(amount).toFixed(2),
             currency  : "INR",
@@ -89,7 +89,7 @@ exports.initiateTransaction = (req, res) => {
     }
     axios({
         method:'POST',
-        url:`${process.env.PAYTM_INITIATE_TRANSACTION_STATGING_API}?mid=${process.env.PAYTM_MERCHANT_ID}&orderId=${_id}`,
+        url:`${process.env.PAYTM_INITIATE_TRANSACTION_PRODUCTION_API}?mid=${process.env.PAYTM_MERCHANT_ID}&orderId=${_id}`,
         data:params
     }).then(({data}) => {
         res.status(200).json({
