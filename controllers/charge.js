@@ -88,7 +88,7 @@ exports.sendMessage = async(req, res) => {
     let msgBody = chargeId ;
     //twilio send Sms
     client.messages
-    .create({body: msgBody, 
+    .create({body: `OrderId: ${msgBody} \n Thank You for Shopping...`, 
     from: phoneNumber, to: `+91${dvc.gsm}`})
     .then((response) => {
         return res.status(200).json({
