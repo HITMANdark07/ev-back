@@ -78,15 +78,14 @@ exports.listChargeByUser = async(req, res) => {
     })
 }
 exports.sendMessage = async(req, res) => {
-    const { user, device, time} = req.body;
+    const { device,chargeId} = req.body;
     const dvc = await Device.findById(device);
     if(!dvc.gsm){
         return res.status(400).json({
             message:'Device is not of type GSM'
         })
     }
-    let total = Number(((Number(time)/60000)*dvc.rate).toFixed(2));
-    let msgBody = `"{\"device\":\"${device}\",\"user\":\"${user}\",\"amount\":\"${total}\",\"time\":${time}}"`;
+    let msgBody = chargeId ;
     //twilio send Sms
     client.messages
     .create({body: msgBody, 
@@ -105,7 +104,9 @@ exports.sendMessage = async(req, res) => {
 
 }
 exports.create = async(req, res) => {
-    const {device, user,amount, time} = req.body;
+    const {device, user, time} = req.body;
+    const dvc = await Device.findById(device);
+    let amount = Number(((Number(time)/60000)*dvc.rate).toFixed(2));
     const alreadyReq = await Charge.findOne({device:device,user:user,status:'CHARGING'});
     if(alreadyReq){
         return res.status(400).json({
@@ -118,7 +119,6 @@ exports.create = async(req, res) => {
         amount,
         time: new Date(Date.now()+time)
     });
-    console.log(chargeDoc);
     chargeDoc.save((err, charged) => {
         if(err || !charged){
             return res.status(400).json({
@@ -142,22 +142,27 @@ exports.create = async(req, res) => {
 }
 
 exports.confirm = async(req,res) => {
-    const {deviceId, userId} = req.body;
-    const device = await Device.findById(deviceId);
-    Charge.findOne({device:deviceId, user:userId, confirm:false}).exec((err,chargingDoc) => {
+    const {id} = req.body;
+    Charge.findById(id).populate('device').exec((err,chargingDoc) => {
         if(err || !chargingDoc){
             return res.status(400).json({
                 message:"Please Try Again"
             })
         }
+        if(chargingDoc.confirm==true){
+            return res.status(400).json({
+                message:"Already Confirmed"
+            })
+        }
         chargingDoc.confirm=true;
+        chargingDoc.status="CHARGING"
         chargingDoc.save((err, chargConfirmed) => {
             if(err  || !chargConfirmed){
                 return res.status(400).json({
                     message:errorHandler(err)
                 })
             }
-            User.findByIdAndUpdate(userId,{
+            User.findByIdAndUpdate(chargingDoc.user,{
                 $inc:{balance: -chargingDoc.amount}
             },(err ,user) => {
                 if(err || !user){
@@ -165,7 +170,7 @@ exports.confirm = async(req,res) => {
                         message:errorHandler(err)
                     })
                 }
-                User.findByIdAndUpdate(device.owner,{
+                User.findByIdAndUpdate(chargingDoc.device.owner,{
                     $inc:{balance: Number(chargingDoc.amount)*0.8}
                 },(err, owner) => {
                     if(err || !owner){
@@ -173,16 +178,26 @@ exports.confirm = async(req,res) => {
                             message:errorHandler(err)
                         })
                     }
-                    return res.status(200).json({
-                        status:"SUCCESS",
-                        message:"Confirmed Charging",
-                        time:chargingDoc.time,
-                        device:chargingDoc.device
-                    })
+                    return res.status(200).json(chargingDoc.time - Date.now())
                 })
             })
         })
     })
+}
+
+exports.isConfirm = async(req, res) => {
+    try{
+        let charge = await Charge.findById(req.params.chargeId);
+        if(charge.confirm){
+            return res.status(200).json(true);
+        }
+        return res.status(400).json(false);
+    }catch(err){
+        return res.status(400).json({
+            message: 'Something Went Wrong'
+        });
+    }
+
 }
 
 exports.getAllChargingChargers = async(req, res) => {
