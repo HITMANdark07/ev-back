@@ -9,7 +9,7 @@ router.post("/create", create);
 router.post("/confirm", confirm );
 router.get("/confirming/:chargeId", isConfirm );
 router.get("/charging-chargers", getAllChargingChargers);
-router.get("/send-sms", sendMessage);
+router.post("/send-sms", sendMessage);
 router.param("userId",userById);
 
 
