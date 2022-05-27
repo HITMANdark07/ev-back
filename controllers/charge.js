@@ -103,6 +103,7 @@ exports.sendMessage = async(req, res) => {
     })
 
 }
+
 exports.create = async(req, res) => {
     const {device, user, time} = req.body;
     const dvc = await Device.findById(device);
@@ -185,6 +186,28 @@ exports.confirm = async(req,res) => {
     })
 }
 
+exports.deviceFindStatus= async(req, res) => {
+    try{
+        let charge = await Charge.findOne({device:req.params.deviceId,status:'PENDING',confirm:false}).populate('device');
+        if(!charge){
+            return res.status(400).json({
+                success:false,
+                time:0
+            })
+        }
+        return res.status(200).json({
+            success:true,
+            id:charge._id,
+            time:charge.time
+        })
+    }catch(err){
+        return res.status(400).json({
+            success:false,
+            time:0
+        })
+    }
+}
+
 exports.isConfirm = async(req, res) => {
     try{
         let charge = await Charge.findById(req.params.chargeId);
@@ -197,7 +220,6 @@ exports.isConfirm = async(req, res) => {
             message: 'Something Went Wrong'
         });
     }
-
 }
 
 exports.getAllChargingChargers = async(req, res) => {

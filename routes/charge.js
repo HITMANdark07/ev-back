@@ -1,6 +1,6 @@
 const router = require('express').Router();
 
-const { create,confirm,getAllChargingChargers,list,listChargeByUser, sendMessage, isConfirm } = require('../controllers/charge');
+const { create,confirm,getAllChargingChargers,list,listChargeByUser, sendMessage, isConfirm, deviceFindStatus } = require('../controllers/charge');
 const { userById } = require('../controllers/user');
 
 router.get("/list",list);
@@ -9,6 +9,7 @@ router.post("/create", create);
 router.post("/confirm", confirm );
 router.get("/confirming/:chargeId", isConfirm );
 router.get("/charging-chargers", getAllChargingChargers);
+router.get("/device/status-check/:deviceId",deviceFindStatus);
 router.post("/send-sms", sendMessage);
 router.param("userId",userById);
 
