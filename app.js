@@ -13,6 +13,7 @@ const paytmRoutes = require('./routes/paytm');
 const trasactionRoutes = require('./routes/transaction');
 const withdrawlRequestRoutes = require('./routes/withdrawlReq');
 const chargeRoutes = require('./routes/charge');
+const pingRoutes = require("./routes/ping");
 
 // app
 const app = express();
@@ -42,6 +43,7 @@ app.use("/api/transaction",paytmRoutes);
 app.use("/api/transactions",trasactionRoutes);
 app.use("/api/withdrawl",withdrawlRequestRoutes);
 app.use("/api/charge",chargeRoutes);
+app.use("/pg",pingRoutes);
 
 app.get("/", (req, res) => {
     res.send("EVCHARGE BACKEND");
