@@ -72,16 +72,14 @@ exports.listDevicesByUser = (req, res) => {
 }
 
 exports.create = async(req, res) => {
-    const {location , owner,code,rate, device_type,gsm,api} = req.body;
+    const {location , owner,code,rate, privacy} = req.body;
     let data={
         code:code?.toUpperCase(),
         rate,
         location,
         owner,
-        device_type
+        privacy
     };
-    if(gsm) data['gsm'] = gsm;
-    if(api) data['api'] = api;
     let device_exist = await Device.findOne({code:code?.toUpperCase()});
     if(device_exist){
         return res.status(400).json({
