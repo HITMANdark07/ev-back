@@ -153,10 +153,10 @@ exports.update = (req, res) => {
 exports.toogleDevicePrivacy = async(req, res) => {
     try{
         const device = req.device;
-        device.private = !device.private;
+        device.privacy = !device.privacy;
         await device.save();
         return res.status(200).json({
-            message:`device privacy updated ${device.private ? 'private':'public'}`
+            message:`device privacy updated ${device.privacy ? 'private':'public'}`
         })
     }catch(err){
         return res.status(400).json({

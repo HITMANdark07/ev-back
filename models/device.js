@@ -29,7 +29,7 @@ const DeviceSchema = mongoose.Schema({
         type:Boolean,
         default:false
     },
-    private:{
+    privacy:{
         type:Boolean,
         default:false
     },
