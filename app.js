@@ -13,6 +13,7 @@ const paytmRoutes = require('./routes/paytm');
 const trasactionRoutes = require('./routes/transaction');
 const withdrawlRequestRoutes = require('./routes/withdrawlReq');
 const chargeRoutes = require('./routes/charge');
+const hostReqRoutes = require('./routes/hostreq');
 const pingRoutes = require("./routes/ping");
 
 // app
@@ -43,6 +44,7 @@ app.use("/api/transaction",paytmRoutes);
 app.use("/api/transactions",trasactionRoutes);
 app.use("/api/withdrawl",withdrawlRequestRoutes);
 app.use("/api/charge",chargeRoutes);
+app.use("/api/host", hostReqRoutes);
 app.use("/pg",pingRoutes);
 
 app.get("/", (req, res) => {
