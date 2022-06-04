@@ -11,7 +11,8 @@ exports.deviceValidator = (req, res, next) => {
         location: locationSchema,
         owner: Joi.string().required(),
         code: Joi.string().required(),
-        rate: Joi.number().required()
+        rate: Joi.number().required(),
+        privacy:Joi.boolean().required()
     })
 
     const { error } = deviceSchema.validate(req.body);
