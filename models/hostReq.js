@@ -15,6 +15,14 @@ const HostReqSchema = mongoose.Schema({
     photo:{
         type:String,
         required:true
+    },
+    id_proof:{
+        type:String,
+        required:true
+    },
+    electricity_bill:{
+        type:String,
+        required:true
     }
 },{
     timestamps:true

@@ -1,5 +1,7 @@
 const Charge = require("../models/charge");
+const formidable = require("formidable");
 const User  = require("../models/user");
+const { s3upload } = require("../utils/s3");
 
 exports.deviceFindStatus= async(req, res) => {
     try{
@@ -65,4 +67,31 @@ exports.confirm = async(req,res) => {
             })
         })
     })
+}
+
+exports.uploadToS3 = async(req, res) => {
+    try{
+        let form = new formidable.IncomingForm();
+        form.keepExtensions = true;
+        form.parse(req, (err, _, files) => {
+            if(err){
+                return res.status(400).json({
+                    message:'Error in parsing data'
+                })
+            }
+
+            const { filepath, newFilename, mimetype } = files.photo;
+            s3upload(filepath,newFilename,mimetype).then((location) => {
+                return res.status(200).json({
+                    location: location
+                })
+            }).catch((err) => {
+                res.status(400).json(false);
+            })
+        })
+    }catch(err){
+        res.status(400).json({
+            message:'Someting went wrong'
+        })
+    }
 }
