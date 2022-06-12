@@ -61,7 +61,7 @@ exports.listverifiedRequests = async(req, res) => {
         const hostReqs  = await HostReq.find({
             $nor:[{status:'PENDING'}]
         }).skip(Number(skip)).limit(Number(limit));
-        const count = await HostReq.countDocuments({status:'PENDING'}) 
+        const count = await HostReq.countDocuments({$nor:[{status:'PENDING'}]}) 
         return res.status(200).json({
             data:hostReqs,
             count:count
