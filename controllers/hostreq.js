@@ -36,7 +36,43 @@ exports.updateHostReqStatus = async(req, res) => {
         })
     }
 }
+exports.listUnverifiedRequests = async(req, res) => {
+    try{
+        const { limit=5, skip=0 } = req.query;
+        const hostReqs  = await HostReq.find({
+            status:'PENDING'
+        }).skip(Number(skip)).limit(Number(limit));
+        const count = await HostReq.countDocuments({status:'PENDING'}) 
+        return res.status(200).json({
+            data:hostReqs,
+            count:count
+        });
+    }catch(err){
+        console.log(err);
+        return res.status(400).json({
+            message:'Something Went Wrong'
+        })
+    }
+}
 
+exports.listverifiedRequests = async(req, res) => {
+    try{
+        const { limit=5, skip=0 } = req.query;
+        const hostReqs  = await HostReq.find({
+            $nor:[{status:'PENDING'}]
+        }).skip(Number(skip)).limit(Number(limit));
+        const count = await HostReq.countDocuments({status:'PENDING'}) 
+        return res.status(200).json({
+            data:hostReqs,
+            count:count
+        });
+    }catch(err){
+        console.log(err);
+        return res.status(400).json({
+            message:'Something Went Wrong'
+        })
+    }
+}
 exports.createRequest = async(req, res) => {
     try{
         let form = new formidable.IncomingForm();
