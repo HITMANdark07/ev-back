@@ -15,7 +15,7 @@ exports.deviceFindStatus= async(req, res) => {
         return res.status(200).json({
             success:true,
             id:charge._id,
-            time: charge.time- new Date().getTime()
+            time: charge.time-Date.now()
         })
     }catch(err){
         return res.status(400).json({

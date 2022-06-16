@@ -218,7 +218,7 @@ exports.isConfirm = async(req, res) => {
     try{
         let charge = await Charge.findById(req.params.chargeId);
         if(charge.confirm){
-            return res.status(200).json(true);
+            return res.status(200).json(charge.time-Date.now());
         }
         return res.status(400).json(false);
     }catch(err){
