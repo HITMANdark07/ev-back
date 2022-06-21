@@ -26,6 +26,7 @@
     "jsonwebtoken": "^8.5.1",
     "lodash": "^4.17.21",
     "mongoose": "^6.1.3",
+    "mongoose-serial": "^1.0.4",
     "morgan": "^1.10.0",
     "nodemon": "^2.0.15",
     "paytmchecksum": "^1.5.0",

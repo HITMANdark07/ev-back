@@ -5,7 +5,7 @@ const { s3upload } = require("../utils/s3");
 
 exports.deviceFindStatus= async(req, res) => {
     try{
-        let charge = await Charge.findOne({device:req.body.deviceId,status:'PENDING',confirm:false}).populate('device');
+        let charge = await Charge.findOne({deviceCode:req.body.code,status:'PENDING',confirm:false}).populate('device');
         if(!charge){
             return res.status(400).json({
                 success:false,
@@ -14,7 +14,7 @@ exports.deviceFindStatus= async(req, res) => {
         }
         return res.status(200).json({
             success:true,
-            id:charge._id,
+            id:charge.id,
             time: charge.time-Date.now()
         })
     }catch(err){
@@ -27,7 +27,7 @@ exports.deviceFindStatus= async(req, res) => {
 
 exports.confirm = async(req,res) => {
     const {id} = req.body;
-    Charge.findById(id).populate('device').exec((err,chargingDoc) => {
+    Charge.findOne({id:id}).populate('device').exec((err,chargingDoc) => {
         if(err || !chargingDoc){
             return res.status(400).json({
                 message:"Please Try Again"

@@ -11,24 +11,38 @@ const phoneNumber = process.env.TWILIO_NUMBER;
 const client = require('twilio')(accountSid, authToken);
 
 
-const updateStatus = (deviceId, chargeId) => {
-    Charge.findByIdAndUpdate(chargeId,{
-        status:'CHARGED',
-    }, (err, charged) => {
-        if(err || !charged){
-            console.log(err);
-            return ;
-        }
-        Device.findByIdAndUpdate(deviceId,{
-            inuse:false
-        },(err, chargingDevice) => {
-            if(err || !chargingDevice){
+const updateStatus = (deviceId, chargeId,time) => {
+    let timer1 = setTimeout(async() => {
+        Charge.findByIdAndUpdate(chargeId,{
+            status:'CHARGED',
+        }, (err, charged) => {
+            if(err || !charged){
                 console.log(err);
                 return ;
             }
-            console.log("device status updated");
-        })
-    });
+            Device.findByIdAndUpdate(deviceId,{
+                inuse:false
+            },(err, chargingDevice) => {
+                if(err || !chargingDevice){
+                    console.log(err);
+                    return ;
+                }
+                console.log("device status updated");
+            })
+        });
+    },time)
+    setTimeout(async() => {
+        let device = await Device.findById(deviceId)
+        let chrg = await Charge.findById(chargeId);
+        if(device.inuse && chrg.status==='PENDING'){
+            chrg.status='FAILED';
+            device.inuse=false;
+            await device.save();
+            await chrg.save();
+            clearTimeout(timer1)
+        }
+    },120000);
+    
 }
 exports.list = async(req, res) => {
     const { limit, skip} = req.query;
@@ -124,10 +138,12 @@ exports.create = async(req, res) => {
         device,
         user,
         amount,
+        deviceCode:dvc.code,
         time: new Date(Date.now()+time)
     });
     chargeDoc.save((err, charged) => {
         if(err || !charged){
+            console.log(err)
             return res.status(400).json({
                 message:errorHandler(err)
             })
@@ -140,9 +156,8 @@ exports.create = async(req, res) => {
                     message:errorHandler(err)
                 })
             }
-            setTimeout(() => {
-                updateStatus(chargingDevice._id,charged._id);
-            },time);
+            updateStatus(chargingDevice._id,charged._id, time);
+        
             return res.status(200).json(charged);
         })
     })

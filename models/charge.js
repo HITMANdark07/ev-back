@@ -1,11 +1,19 @@
 const mongoose = require('mongoose');
+const mongooseSerial = require("mongoose-serial")
 const ObjectId = mongoose.Schema.ObjectId;
 
 
-const ChargeSChema = mongoose.Schema({
+const ChargeSchema = mongoose.Schema({
     device:{
         type:ObjectId,
         ref:'Device',
+    },
+    deviceCode:{
+        type:String,
+        required:true
+    },
+    id:{
+        type:String
     },
     user:{
         type:ObjectId,
@@ -34,5 +42,5 @@ const ChargeSChema = mongoose.Schema({
 },{
     timestamps:true
 });
-
-module.exports = mongoose.model("Charge", ChargeSChema);
+ChargeSchema.plugin(mongooseSerial, { field:"id",prefix:new Date().getFullYear(), initCount:"monthly" , separator: "", digits:5});
+module.exports = mongoose.model("Charge", ChargeSchema);
