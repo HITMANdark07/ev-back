@@ -128,7 +128,10 @@ exports.create = async(req, res) => {
         }
     }
     let amount = Number(((Number(time)/60000)*dvc.rate).toFixed(2));
-    const alreadyReq = await Charge.findOne({device:device,user:user,status:'CHARGING'});
+    const alreadyReq = await Charge.findOne({device:device,user:user,$or:[
+        {status:'PENDING'},
+        {status:'CHARGING'}
+    ]});
     if(alreadyReq){
         return res.status(400).json({
             message:"Already a request is pending"
