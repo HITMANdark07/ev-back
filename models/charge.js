@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-const mongooseSerial = require("mongoose-serial")
 const ObjectId = mongoose.Schema.ObjectId;
 
 
@@ -42,5 +41,5 @@ const ChargeSchema = mongoose.Schema({
 },{
     timestamps:true
 });
-ChargeSchema.plugin(mongooseSerial, { field:"id",prefix:new Date().getFullYear(), initCount:"monthly" , separator: "", digits:5});
+
 module.exports = mongoose.model("Charge", ChargeSchema);

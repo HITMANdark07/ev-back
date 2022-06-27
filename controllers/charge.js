@@ -137,11 +137,14 @@ exports.create = async(req, res) => {
             message:"Already a request is pending"
         })
     }
+    const chargesCount = await Charge.countDocuments({});
+    const sequence = String(new Date().getFullYear())+String(10**6+chargesCount+1);
     const chargeDoc = new Charge({
         device,
         user,
         amount,
         deviceCode:dvc.code,
+        id:sequence,
         time: new Date(Date.now()+time)
     });
     chargeDoc.save((err, charged) => {
