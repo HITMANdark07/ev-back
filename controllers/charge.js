@@ -119,15 +119,18 @@ exports.sendMessage = async(req, res) => {
 
 exports.create = async(req, res) => {
     const {device, user, time, email} = req.body;
-    const dvc = await Device.findById(device);
-    if(dvc?.private){
-        if(!dvc?.members.includes(email) || dvc.owner!==email){
+    const dvc = await Device.findById(device).populate("owner");
+    let member = false;
+    if(dvc?.privacy){
+        if(dvc?.members.includes(email) || dvc.owner?.email==email){
+            member =true;
+        }else{
             return res.status(400).json({
                 message:'This is a private device'
             })
         }
     }
-    let amount = Number(((Number(time)/60000)*dvc.rate).toFixed(2));
+    let amount = member ? 0 : Number(((Number(time)/60000)*dvc.rate).toFixed(2));
     const alreadyReq = await Charge.findOne({device:device,user:user,$or:[
         {status:'PENDING'},
         {status:'CHARGING'}
