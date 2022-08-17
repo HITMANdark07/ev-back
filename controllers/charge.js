@@ -52,6 +52,8 @@ exports.chargesByDevice = async(req, res) => {
     const skp = parseInt(skip) || 0;
     try{
         const charges = await Charge.find({device:deviceId})
+        .populate("user","name email phone")
+        .populate("device","code location device_type")
         .sort({"createdAt":-1})
         .limit(lim)
         .skip(skp);
