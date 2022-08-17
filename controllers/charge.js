@@ -44,6 +44,25 @@ const updateStatus = (deviceId, chargeId,time) => {
     },120000);
     
 }
+
+exports.chargesByDevice = async(req, res) => {
+    const deviceId = req.device._id;
+    const { limit, skip} = req.query;
+    const lim = parseInt(limit) || 10;
+    const skp = parseInt(skip) || 0;
+    try{
+        const charges = await Charge.find({device:deviceId})
+        .sort({"createdAt":-1})
+        .limit(lim)
+        .skip(skp);
+        
+        res.status(200).json(charges);
+    }catch(err){
+        res.status(400).json({
+            message: errorHandler(err)
+        })
+    }   
+}
 exports.list = async(req, res) => {
     const { limit, skip} = req.query;
     const lim = parseInt(limit) || 10;
