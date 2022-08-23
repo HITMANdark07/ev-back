@@ -51,6 +51,20 @@ exports.list = (req, res) => {
     })
 }
 
+exports.isDeviceCharging = async(req, res) => {
+    try{
+        const { code } = req.body;
+        const device = await Device.findOne({code:code});
+        if(device){
+            return res.status(200).json(device.inuse);
+        }else{
+            return res.status(400).json(false);
+        }
+    }catch(err){
+        return res.status(400).json(false);
+    }
+}
+
 exports.listDevicesByUser = (req, res) => {
     let q = {isDeleted:false,owner:req.profile._id};
     let qry = req.query;
