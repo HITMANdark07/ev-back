@@ -306,7 +306,7 @@ exports.cancelChargeById = async (req, res) => {
     try {
         let charge = req.charge;
         charge.status = 'CANCELED';
-        if (charge.time - (new Date(charge.createdAt).getTime()) > 0) {
+        if (charge.time - (Date.now()) > 0) {
             let updatedCharge = await charge.save();
             await Device.findByIdAndUpdate(charge.device, {
                 inuse: false
