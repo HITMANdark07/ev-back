@@ -20,7 +20,7 @@ const ChargeSchema = mongoose.Schema({
     },
     status:{
         type:String,
-        enum:['PENDING','CHARGING','CHARGED','FAILED'],
+        enum:['PENDING','CHARGING','CHARGED','CANCELED','FAILED'],
         default:'PENDING'
     },
     confirm:{

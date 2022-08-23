@@ -11,183 +11,187 @@ const phoneNumber = process.env.TWILIO_NUMBER;
 const client = require('twilio')(accountSid, authToken);
 
 
-const updateStatus = (deviceId, chargeId,time) => {
-    let timer1 = setTimeout(async() => {
-        Charge.findByIdAndUpdate(chargeId,{
-            status:'CHARGED',
+const updateStatus = (deviceId, chargeId, time) => {
+    let timer1 = setTimeout(async () => {
+        Charge.findByIdAndUpdate(chargeId, {
+            status: 'CHARGED',
         }, (err, charged) => {
-            if(err || !charged){
+            if (err || !charged) {
                 console.log(err);
-                return ;
+                return;
             }
-            Device.findByIdAndUpdate(deviceId,{
-                inuse:false
-            },(err, chargingDevice) => {
-                if(err || !chargingDevice){
+            Device.findByIdAndUpdate(deviceId, {
+                inuse: false
+            }, (err, chargingDevice) => {
+                if (err || !chargingDevice) {
                     console.log(err);
-                    return ;
+                    return;
                 }
                 console.log("device status updated");
             })
         });
-    },time)
-    setTimeout(async() => {
+    }, time)
+    setTimeout(async () => {
         let device = await Device.findById(deviceId)
         let chrg = await Charge.findById(chargeId);
-        if(device.inuse && chrg.status==='PENDING'){
-            chrg.status='FAILED';
-            device.inuse=false;
+        if (device.inuse && chrg.status === 'PENDING') {
+            chrg.status = 'FAILED';
+            device.inuse = false;
             await device.save();
             await chrg.save();
             clearTimeout(timer1)
         }
-    },120000);
-    
+    }, 120000);
+
 }
 
-exports.chargesByDevice = async(req, res) => {
+exports.chargesByDevice = async (req, res) => {
     const deviceId = req.device._id;
-    const { limit, skip} = req.query;
+    const { limit, skip } = req.query;
     const lim = parseInt(limit) || 10;
     const skp = parseInt(skip) || 0;
-    try{
-        const charges = await Charge.find({device:deviceId})
-        .populate("user","name email phone")
-        .populate("device","code location device_type")
-        .sort({"createdAt":-1})
-        .limit(lim)
-        .skip(skp);
-        
+    try {
+        const charges = await Charge.find({ device: deviceId })
+            .populate("user", "name email phone")
+            .populate("device", "code location device_type")
+            .sort({ "createdAt": -1 })
+            .limit(lim)
+            .skip(skp);
+
         res.status(200).json(charges);
-    }catch(err){
+    } catch (err) {
         res.status(400).json({
             message: errorHandler(err)
         })
-    }   
+    }
 }
-exports.list = async(req, res) => {
-    const { limit, skip} = req.query;
+exports.list = async (req, res) => {
+    const { limit, skip } = req.query;
     const lim = parseInt(limit) || 10;
     const skp = parseInt(skip) || 0;
     let count = await Charge.countDocuments({})
     Charge.find({})
-    .populate("user","name email phone")
-    .populate("device","code location device_type")
-    .sort({"createdAt":-1})
-    .limit(lim)
-    .skip(skp)
-    .exec((err, chargings) => {
-        if(err || !chargings){
-            return res.status(400).json({
-                message: errorHandler(err)
+        .populate("user", "name email phone")
+        .populate("device", "code location device_type")
+        .sort({ "createdAt": -1 })
+        .limit(lim)
+        .skip(skp)
+        .exec((err, chargings) => {
+            if (err || !chargings) {
+                return res.status(400).json({
+                    message: errorHandler(err)
+                })
+            }
+            res.status(200).json({
+                total: count,
+                chargings: chargings
             })
-        }
-        res.status(200).json({
-            total:count,
-            chargings:chargings
         })
-    })
 }
 
-exports.listChargeByUser = async(req, res) => {
-    const { limit, skip} = req.query;
+exports.listChargeByUser = async (req, res) => {
+    const { limit, skip } = req.query;
     const lim = parseInt(limit) || 10;
     const skp = parseInt(skip) || 0;
-    let count = await Charge.countDocuments({user:req.profile._id})
-    Charge.find({user:req.profile._id})
-    .populate("user","name email phone")
-    .populate("device","code location device_type")
-    .sort({"createdAt":-1})
-    .limit(lim)
-    .skip(skp)
-    .exec((err, chargings) => {
-        if(err || !chargings){
-            return res.status(400).json({
-                message: errorHandler(err)
+    let count = await Charge.countDocuments({ user: req.profile._id })
+    Charge.find({ user: req.profile._id })
+        .populate("user", "name email phone")
+        .populate("device", "code location device_type")
+        .sort({ "createdAt": -1 })
+        .limit(lim)
+        .skip(skp)
+        .exec((err, chargings) => {
+            if (err || !chargings) {
+                return res.status(400).json({
+                    message: errorHandler(err)
+                })
+            }
+            res.status(200).json({
+                total: count,
+                chargings: chargings
             })
-        }
-        res.status(200).json({
-            total:count,
-            chargings:chargings
         })
-    })
 }
-exports.sendMessage = async(req, res) => {
-    const { device,chargeId} = req.body;
+exports.sendMessage = async (req, res) => {
+    const { device, chargeId } = req.body;
     const dvc = await Device.findById(device);
-    if(!dvc.gsm){
+    if (!dvc.gsm) {
         return res.status(400).json({
-            message:'Device is not of type GSM'
+            message: 'Device is not of type GSM'
         })
     }
-    let msgBody = chargeId ;
+    let msgBody = chargeId;
     //twilio send Sms
     client.messages
-    .create({body: msgBody, 
-    from: phoneNumber, to: `+91${dvc.gsm}`})
-    .then((response) => {
-        return res.status(200).json({
-            message:`OTP Sent Success`,
-            success:true,
+        .create({
+            body: msgBody,
+            from: phoneNumber, to: `+91${dvc.gsm}`
         })
-    }).catch((err) => {
-        return res.status(400).json({
-            message: `OTP Sending Failed`,
-            success:false,
+        .then((response) => {
+            return res.status(200).json({
+                message: `OTP Sent Success`,
+                success: true,
+            })
+        }).catch((err) => {
+            return res.status(400).json({
+                message: `OTP Sending Failed`,
+                success: false,
+            })
         })
-    })
 }
 
-exports.create = async(req, res) => {
-    const {device, user, time, email} = req.body;
+exports.create = async (req, res) => {
+    const { device, user, time, email } = req.body;
     const dvc = await Device.findById(device).populate("owner");
     let member = false;
-    if(dvc?.privacy){
-        if(dvc?.members.includes(email) || dvc.owner?.email==email){
-            member =true;
-        }else{
+    if (dvc?.privacy) {
+        if (dvc?.members.includes(email) || dvc.owner?.email == email) {
+            member = true;
+        } else {
             return res.status(400).json({
-                message:'This is a private device'
+                message: 'This is a private device'
             })
         }
     }
-    let amount = member ? 0 : Number(((Number(time)/60000)*dvc.rate).toFixed(2));
-    const alreadyReq = await Charge.findOne({device:device,user:user,$or:[
-        {status:'PENDING'},
-        {status:'CHARGING'}
-    ]});
-    if(alreadyReq){
+    let amount = member ? 0 : Number(((Number(time) / 60000) * dvc.rate).toFixed(2));
+    const alreadyReq = await Charge.findOne({
+        device: device, user: user, $or: [
+            { status: 'PENDING' },
+            { status: 'CHARGING' }
+        ]
+    });
+    if (alreadyReq) {
         return res.status(400).json({
-            message:"Already a request is pending"
+            message: "Already a request is pending"
         })
     }
     const chargesCount = await Charge.countDocuments({});
-    const sequence = String(new Date().getFullYear())+String(10**6+chargesCount+1);
+    const sequence = String(new Date().getFullYear()) + String(10 ** 6 + chargesCount + 1);
     const chargeDoc = new Charge({
         device,
         user,
         amount,
-        deviceCode:dvc.code,
-        id:sequence,
-        time: new Date(Date.now()+time)
+        deviceCode: dvc.code,
+        id: sequence,
+        time: new Date(Date.now() + time)
     });
     chargeDoc.save((err, charged) => {
-        if(err || !charged){
+        if (err || !charged) {
             console.log(err)
             return res.status(400).json({
-                message:errorHandler(err)
+                message: errorHandler(err)
             })
         }
-        Device.findByIdAndUpdate(device,{
-            inuse:true
-        },(err, chargingDevice) => {
-            if(err || !chargingDevice){
+        Device.findByIdAndUpdate(device, {
+            inuse: true
+        }, (err, chargingDevice) => {
+            if (err || !chargingDevice) {
                 return res.status(400).json({
-                    message:errorHandler(err)
+                    message: errorHandler(err)
                 })
             }
-            updateStatus(chargingDevice._id,charged._id, time);
-        
+            updateStatus(chargingDevice._id, charged._id, time);
+
             return res.status(200).json(charged);
         })
     })
@@ -259,29 +263,72 @@ exports.create = async(req, res) => {
 //     }
 // }
 
-exports.isConfirm = async(req, res) => {
-    try{
+exports.isConfirm = async (req, res) => {
+    try {
         let charge = await Charge.findById(req.params.chargeId);
-        if(charge.confirm){
-            let  remainingTime =charge.time-Date.now();
-            if(remainingTime>0) return res.status(200).json(remainingTime);
+        if (charge.confirm) {
+            let remainingTime = charge.time - Date.now();
+            if (remainingTime > 0) return res.status(200).json(remainingTime);
             else return res.status(200).json(0);
         }
         return res.status(400).json(false);
-    }catch(err){
+    } catch (err) {
         return res.status(400).json({
             message: 'Something Went Wrong'
         });
     }
 }
 
-exports.getAllChargingChargers = async(req, res) => {
-    Charge.find({status:'CHARGING'}).exec((err, chargers) => {
-        if(err || !chargers){
+exports.getAllChargingChargers = async (req, res) => {
+    Charge.find({ status: 'CHARGING' }).exec((err, chargers) => {
+        if (err || !chargers) {
             return res.status(400).json({
-                message:errorHandler(err)
+                message: errorHandler(err)
             })
         }
         return res.status(200).json(chargers);
     })
+}
+
+exports.getChargeById = async (req, res, next, id) => {
+    try {
+        const charge = await Charge.findById(id);
+        req.charge = charge;
+        next();
+    } catch (err) {
+        return res.status(400).json({
+            message: 'Charge not Found'
+        })
+    }
+}
+
+exports.cancelChargeById = async (req, res) => {
+    try {
+        let charge = req.charge;
+        charge.status = 'CANCELED';
+        if (charge.time - (new Date(charge.createdAt).getTime()) > 0) {
+            let updatedCharge = await charge.save();
+            await Device.findByIdAndUpdate(charge.device, {
+                inuse: false
+            }, { new: true });
+            return res.status(200).json(updatedCharge);
+        } else {
+            return res.status(400).json({
+                message: 'Already Charged'
+            })
+        }
+
+    } catch (err) {
+        return res.status(400).json({
+            message: 'Unable to cancel your request'
+        })
+    }
+}
+
+exports.isChargeCanceled = async (req, res) => {
+    if (req.charge.status === 'CANCELED' && (req.charge.time - (new Date(req.charge.createdAt).getTime()))) {
+        return res.status(200).json(true);
+    } else {
+        return res.status(400).json(false);
+    }
 }
