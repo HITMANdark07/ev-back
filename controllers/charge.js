@@ -153,7 +153,7 @@ exports.create = async (req, res) => {
             })
         }
     }
-    let amount = member ? 0 : Number(((Number(time) / 60000) * dvc.rate).toFixed(2));
+    let amount = member ? 0 : Number((Number((Number(time) / 60000)/60) * dvc.rate).toFixed(2));
     const alreadyReq = await Charge.findOne({
         device: device, user: user, $or: [
             { status: 'PENDING' },
