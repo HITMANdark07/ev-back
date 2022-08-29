@@ -197,6 +197,26 @@ exports.create = async (req, res) => {
     })
 }
 
+exports.updatePower = async(req, res) => {
+    try{
+        const { id , power  } = req.body;
+        const charge = await Charge.findOne({id});
+        if(charge){
+            charge.powerUsed = power;
+            await charge.save();
+            return res.status(200).json(true);
+        }else{
+            return res.status(400).json({
+                message:'Not a valid id'
+            })
+        }
+    }catch(err){
+        return res.status(400).json({
+            message:err
+        })
+    }
+}
+
 // exports.confirm = async(req,res) => {
 //     const {id} = req.body;
 //     Charge.findById(id).populate('device').exec((err,chargingDoc) => {

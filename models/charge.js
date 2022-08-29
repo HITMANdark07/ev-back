@@ -35,9 +35,9 @@ const ChargeSchema = mongoose.Schema({
         type:Number,
         default:0
     },
-    // powerUsed:{
-    //     type:Number,
-    // }
+    powerUsed:{
+        type:Number,
+    }
 },{
     timestamps:true
 });
