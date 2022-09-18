@@ -33,6 +33,11 @@ exports.confirm = async(req,res) => {
                 message:"Please Try Again"
             })
         }
+        if(chargingDoc.time - Date.now()<0){
+            return res.status(400).json({
+                message:'Timeout'
+            })
+        }
         if(chargingDoc.confirm==true){
             return res.status(400).json({
                 message:"Already Confirmed"

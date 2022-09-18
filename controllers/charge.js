@@ -13,6 +13,10 @@ const client = require('twilio')(accountSid, authToken);
 
 const updateStatus = (deviceId, chargeId, time) => {
     let timer1 = setTimeout(async () => {
+        let chrg = await Charge.findById(chargeId);
+        if(chrg?.status!=='CHARGING'){
+            return;
+        }
         Charge.findByIdAndUpdate(chargeId, {
             status: 'CHARGED',
         }, (err, charged) => {
