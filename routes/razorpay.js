@@ -1,7 +1,7 @@
 const router = require('express').Router();
 
 const { verify } = require('jsonwebtoken');
-const { createOrder, findOrderById, read, updateOrder } = require('../controllers/razorpay');
+const { createOrder, findOrderById, read, updateOrder,verify } = require('../controllers/razorpay');
 
 router.get("/:orderId",read);
 router.post("/initiate",createOrder);
