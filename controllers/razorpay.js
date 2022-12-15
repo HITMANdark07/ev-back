@@ -69,9 +69,7 @@ exports.createOrder = async(req, res, next) => {
 exports.updateOrder = async(req, res, next) => {
     try{
         const { orderId, razorpay_payment_id, razorpay_signature } = req.body;
-        console.log(orderId,"orderId");
         const order = await Order.findById(orderId);
-        console.log(order);
         order.paymentId = razorpay_payment_id;
         order.paymentSignature = razorpay_signature;
         order.save((err, ord) => {
@@ -94,8 +92,9 @@ exports.verify = async(req, res) => {
     try{
         console.log("verifying...");
         const { razorpay_payment_id,razorpay_order_id, razorpay_signature } = req.body;
-        const order = req.order;
+        let order = req.order;
         const isPaymentValid =  validatePaymentVerification({"order_id": razorpay_order_id, "payment_id": razorpay_payment_id }, razorpay_signature, process.env.RAZORPAY_KEY_SECRET);
+        console.log(isPaymentValid,"isPaymentValid");
         if(isPaymentValid){
             order.status = 'SUCCESS';
             await order.save();
@@ -111,5 +110,8 @@ exports.verify = async(req, res) => {
         }
     }catch(err){
         console.log(err);
+        return res.status(400).json({
+            message:err.message
+        })
     }
 }
