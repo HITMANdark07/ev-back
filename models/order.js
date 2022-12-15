@@ -7,10 +7,20 @@ const OrderSchema = mongoose.Schema({
         type:ObjectId,
         ref:'User'
     },
+    orderId:{
+        type:String,
+        required:true
+    },
     status:{
         type:String,
         enum:['PENDING','SUCCESS', 'FAIL'],
         default:'PENDING'
+    },
+    paymentId:{
+        type:String
+    },
+    paymentSignature:{
+        type:String
     },
     amount:{
         type:Number,
