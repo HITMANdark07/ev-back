@@ -69,6 +69,7 @@ exports.createOrder = async(req, res, next) => {
 exports.updateOrder = async(req, res, next) => {
     try{
         const { orderId, razorpay_payment_id, razorpay_signature } = req.body;
+        console.log(orderId,"orderId");
         const order = await Order.findById(orderId);
         console.log(order);
         order.paymentId = razorpay_payment_id;
