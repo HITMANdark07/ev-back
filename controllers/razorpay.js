@@ -39,7 +39,7 @@ exports.createOrder = async(req, res, next) => {
         if(ord.id){
             const order = new Order({
                 user:userId,
-                amount:amount,
+                amount:+(+(amount)/100),
                 orderId:ord.id
             });
             order.save((err, ord) => {
@@ -96,29 +96,19 @@ exports.verify = async(req, res) => {
         const isPaymentValid =  validatePaymentVerification({"order_id": razorpay_order_id, "payment_id": razorpay_payment_id }, razorpay_signature, process.env.RAZORPAY_KEY_SECRET);
         console.log(isPaymentValid,"isPaymentValid");
         if(isPaymentValid){
-            console.log("here");
-            order.status = "SUCCESS";
-            order.save((err, ord) => {
-                if(err || !ord){
-                    return res.status(400).json({
-                        message: 'Payment saving failed'
-                    })
-                }
-                return res.status({
-                    success:true
-                })
+            order.status = 'SUCCESS';
+            await order.save();
+            await User.findByIdAndUpdate(order.user,{
+                $inc:{ balance : order.amount}
+            });
+            return res.json({
+                success:true
             })
         }else{
             order.status = 'FAILED';
-            order.save((err, ord) => {
-                if(err || !ord){
-                    return res.status(400).json({
-                        message: 'Payment saving failed'
-                    })
-                }
-                return res.status({
-                    success:true
-                })
+            await order.save();
+            return res.json({
+                success:false
             })
         }
     }catch(err){
