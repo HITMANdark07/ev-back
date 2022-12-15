@@ -96,7 +96,8 @@ exports.verify = async(req, res) => {
         const isPaymentValid =  validatePaymentVerification({"order_id": razorpay_order_id, "payment_id": razorpay_payment_id }, razorpay_signature, process.env.RAZORPAY_KEY_SECRET);
         console.log(isPaymentValid,"isPaymentValid");
         if(isPaymentValid){
-            order.status = 'SUCCESS';
+            console.log("here");
+            order.status = "SUCCESS";
             order.save((err, ord) => {
                 if(err || !ord){
                     return res.status(400).json({
