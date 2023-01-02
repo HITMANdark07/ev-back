@@ -221,6 +221,156 @@ exports.updatePower = async(req, res) => {
     }
 }
 
+exports.getMonthStats = async(req, res) => {
+    try{
+        const { deviceCode='KOL221' } = req.body;
+        const pipeline = [{
+            $match: {
+             deviceCode: deviceCode,
+             status: 'CHARGED'
+            }
+           }, {
+            $group: {
+             _id: {
+              month: {
+               $month: '$createdAt'
+              },
+              year: {
+               $year: '$createdAt'
+              }
+             },
+             charges: {
+              $sum: 1
+             },
+             amount: {
+              $sum: '$amount'
+             }
+            }
+           }, {
+            $addFields: {
+             date: {
+              $concat: [
+               {
+                $substr: [
+                 '$_id.year',
+                 0,
+                 -1
+                ]
+               },
+               '-',
+               {
+                $substr: [
+                 '$_id.month',
+                 0,
+                 -1
+                ]
+               },
+               '-',
+               '01'
+              ]
+             },
+             month: {
+              $let: {
+               vars: {
+                monthsInString: [
+                 '',
+                 'Jan',
+                 'Feb',
+                 'Mar',
+                 'Apr',
+                 'May',
+                 'Jun',
+                 'Jul',
+                 'Aug',
+                 'Sep',
+                 'Oct',
+                 'Nov',
+                 'Dec'
+                ]
+               },
+               'in': {
+                $arrayElemAt: [
+                 '$$monthsInString',
+                 '$_id.month'
+                ]
+               }
+              }
+             }
+            }
+           }, {
+            $addFields: {
+             dat: {
+              $toDate: '$date'
+             },
+             month: {
+              $concat: [
+               '$month',
+               '-',
+               {
+                $substr: [
+                 '$_id.year',
+                 0,
+                 -1
+                ]
+               }
+              ]
+             }
+            }
+           }, {
+            $sort: {
+             dat: 1
+            }
+           }, {
+            $project: {
+             charges: 1,
+             amount: 1,
+             month: 1
+            }
+           }]
+
+        const data = await Charge.aggregate(pipeline);
+        return res.status(200).json(data);
+    }catch(err){
+        return res.status(400).json({
+            message:err
+        })
+    }
+}
+exports.getYearStats = async(req, res) => {
+    try{
+        const { deviceCode='KOL221' } = req.body;
+        const pipeline = [{
+            $match: {
+             deviceCode: deviceCode,
+             status: 'CHARGED'
+            }
+           }, {
+            $group: {
+             _id: {
+              $year: '$createdAt'
+             },
+             charges: {
+              $sum: 1
+             },
+             amount: {
+              $sum: '$amount'
+             }
+            }
+           }, {
+            $sort: {
+             _id: 1
+            }
+           }]
+
+        const data = await Charge.aggregate(pipeline);
+        return res.status(200).json(data);
+    }catch(err){
+        return res.status(400).json({
+            message:err
+        })
+    }
+}
+
 // exports.confirm = async(req,res) => {
 //     const {id} = req.body;
 //     Charge.findById(id).populate('device').exec((err,chargingDoc) => {
