@@ -20,6 +20,11 @@ const DeviceSchema = mongoose.Schema({
         unique:true,
     },
     location:LocationSchema,
+    device_type:{
+        type:String,
+        enum:['WIFI','GSM','BLE'],
+        default:'WIFI'
+    },
     owner:{
         type:ObjectId,
         ref:'User',
