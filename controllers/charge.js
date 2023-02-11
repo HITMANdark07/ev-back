@@ -3,6 +3,7 @@ const Device = require("../models/device");
 const User = require('../models/user');
 const { errorHandler } = require('../helpers/dbErrorHandler');
 const device = require("../models/device");
+const charge = require("../models/charge");
 
 // Twilio Credentials
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
@@ -212,6 +213,39 @@ exports.updatePower = async(req, res) => {
         }else{
             return res.status(400).json({
                 message:'Not a valid id'
+            })
+        }
+    }catch(err){
+        return res.status(400).json({
+            message:err
+        })
+    }
+}
+
+exports.updatePowerV2 = async(req, res) => {
+    try{
+        const { code , power  } = req.body;
+        const charges = await Charge.find({
+            deviceCode:code
+        }).sort({
+            createdAt:-1
+        }).limit(1);
+        if(charges && !!charges.length){
+            let _charge = charges[0];
+            if(!_charge.powerUsed || power>_charge.powerUsed){
+                _charge.powerUsed = power;
+                await _charge.save();
+                return res.status(200).json({
+                    message:"Power Updated"
+                });
+            }else{
+                res.status(400).json({
+                    message:"Power Already have higher value"
+                })
+            }
+        }else{
+            return res.status(400).json({
+                message:'Charge Not Found'
             })
         }
     }catch(err){

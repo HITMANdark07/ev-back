@@ -1,6 +1,6 @@
 const router = require('express').Router();
 
-const { create,getAllChargingChargers,list,listChargeByUser,getMonthStats, sendMessage, isConfirm, chargesByDevice, cancelChargeById, getChargeById, isChargeCanceled, updatePower, getYearStats } = require('../controllers/charge');
+const { create,getAllChargingChargers,list,listChargeByUser,getMonthStats, sendMessage, isConfirm, chargesByDevice, cancelChargeById, getChargeById, isChargeCanceled, updatePower, getYearStats, updatePowerV2 } = require('../controllers/charge');
 const { userById } = require('../controllers/user');
 const { findDeviceById } = require("../controllers/devices");
 
@@ -8,6 +8,8 @@ router.get("/list",list);
 router.get("/list/:userId", listChargeByUser);
 router.post("/create", create);
 router.post("/power", updatePower);
+router.post("/powerv2", updatePowerV2);
+
 router.get("/list/device/:deviceId",chargesByDevice);
 // router.post("/confirm", confirm );
 router.get("/confirming/:chargeId", isConfirm );
