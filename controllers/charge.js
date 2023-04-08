@@ -261,7 +261,13 @@ exports.getMonthStats = async(req, res) => {
         const pipeline = [{
             $match: {
              deviceCode: deviceCode,
-             status: 'CHARGED'
+             $or:[
+                {
+                  status:'CHARGED'
+                },
+                {
+                  status:'CANCELED'
+                }]
             }
            }, {
             $group: {
@@ -376,7 +382,13 @@ exports.getYearStats = async(req, res) => {
         const pipeline = [{
             $match: {
              deviceCode: deviceCode,
-             status: 'CHARGED'
+             $or:[
+                {
+                  status:'CHARGED'
+                },
+                {
+                  status:'CANCELED'
+                }]
             }
            }, {
             $group: {

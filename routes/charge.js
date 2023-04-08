@@ -1,7 +1,7 @@
 const router = require('express').Router();
 
 const { create,getAllChargingChargers,list,listChargeByUser,getMonthStats, sendMessage, isConfirm, chargesByDevice, cancelChargeById, getChargeById, isChargeCanceled, updatePower, getYearStats, updatePowerV2 } = require('../controllers/charge');
-const { userById } = require('../controllers/user');
+const { userById,requireSignin, isUser  } = require('../controllers/user');
 const { findDeviceById } = require("../controllers/devices");
 
 router.get("/list",list);

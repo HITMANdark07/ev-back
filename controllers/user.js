@@ -234,15 +234,58 @@ exports.login = (req, res) => {
 exports.requireSignin = expressJwt({
     secret: process.env.JWT_SECRET,
     algorithms: ['HS256'] ,
-    userProperty:"auth"
+    userProperty:"auth",
 });
 
-exports.isUser = (req, res, next) => {
-    let user = req.profile && req.auth && req.profile._id == req.auth._id;
-    if(!user){
-       return res.status(403).json({ 
-           error: 'Access denied'
-       });
+exports.isUser = async(req, res, next) => {
+    const id = req.auth._id;
+    if(!id){
+        return res.status(403).json({ 
+            error: 'Access denied'
+        });
     }
-    next();
+    const user = await User.findById(id);
+    if(user && user.activated){
+        req.user = user;
+        next();
+    }else{
+        return res.status(403).json({ 
+            error: 'Access denied'
+        });
+    }
+};
+
+exports.isPartner = async(req, res, next) => {
+    const id = req.auth._id;
+    if(!id){
+        return res.status(403).json({ 
+            error: 'Access denied'
+        });
+    }
+    const user = await User.findById(id);
+    if(user && user.activated && user.role>=1){
+        req.user = user;
+        next();
+    }else{
+        return res.status(403).json({ 
+            error: 'Access denied'
+        });
+    }
+};
+exports.isAdmin = async(req, res, next) => {
+    const id = req.auth._id;
+    if(!id){
+        return res.status(403).json({ 
+            error: 'Access denied'
+        });
+    }
+    const user = await User.findById(id);
+    if(user && user.activated && user.role==2){
+        req.user = user;
+        next();
+    }else{
+        return res.status(403).json({ 
+            error: 'Access denied'
+        });
+    }
 };
