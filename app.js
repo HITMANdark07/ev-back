@@ -16,6 +16,7 @@ const withdrawlRequestRoutes = require('./routes/withdrawlReq');
 const chargeRoutes = require('./routes/charge');
 const hostReqRoutes = require('./routes/hostreq');
 const pingRoutes = require("./routes/ping");
+const partnerRoutes = require('./routes/partner');
 
 // app
 const app = express();
@@ -47,6 +48,7 @@ app.use("/api/transactions",trasactionRoutes);
 app.use("/api/withdrawl",withdrawlRequestRoutes);
 app.use("/api/charge",chargeRoutes);
 app.use("/api/host", hostReqRoutes);
+app.use("/api/partner",partnerRoutes);
 app.use("/pg",pingRoutes);
 
 app.get("/", (req, res) => {
