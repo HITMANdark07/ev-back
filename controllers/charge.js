@@ -1,421 +1,478 @@
 const Charge = require("../models/charge");
 const Device = require("../models/device");
-const User = require('../models/user');
-const { errorHandler } = require('../helpers/dbErrorHandler');
-const device = require("../models/device");
-const charge = require("../models/charge");
+const User = require("../models/user");
+const { errorHandler } = require("../helpers/dbErrorHandler");
+const { Types } = require("mongoose");
+
+const ObjectId = Types.ObjectId;
 
 // Twilio Credentials
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
 const phoneNumber = process.env.TWILIO_NUMBER;
-const client = require('twilio')(accountSid, authToken);
-
+const client = require("twilio")(accountSid, authToken);
 
 const updateStatus = (deviceId, chargeId, time) => {
-    let timer1 = setTimeout(async () => {
-        let chrg = await Charge.findById(chargeId);
-        if(chrg?.status!=='CHARGING'){
-            return;
+  let timer1 = setTimeout(async () => {
+    let chrg = await Charge.findById(chargeId);
+    if (chrg?.status !== "CHARGING") {
+      return;
+    }
+    Charge.findByIdAndUpdate(
+      chargeId,
+      {
+        status: "CHARGED",
+      },
+      (err, charged) => {
+        if (err || !charged) {
+          console.log(err);
+          return;
         }
-        Charge.findByIdAndUpdate(chargeId, {
-            status: 'CHARGED',
-        }, (err, charged) => {
-            if (err || !charged) {
-                console.log(err);
-                return;
+        Device.findByIdAndUpdate(
+          deviceId,
+          {
+            inuse: false,
+          },
+          (err, chargingDevice) => {
+            if (err || !chargingDevice) {
+              console.log(err);
+              return;
             }
-            Device.findByIdAndUpdate(deviceId, {
-                inuse: false
-            }, (err, chargingDevice) => {
-                if (err || !chargingDevice) {
-                    console.log(err);
-                    return;
-                }
-                console.log("device status updated");
-            })
-        });
-    }, time)
-    setTimeout(async () => {
-        let device = await Device.findById(deviceId)
-        let chrg = await Charge.findById(chargeId);
-        if (device.inuse && chrg.status === 'PENDING') {
-            chrg.status = 'FAILED';
-            device.inuse = false;
-            await device.save();
-            await chrg.save();
-            clearTimeout(timer1)
-        }
-    }, 120000);
-
-}
+            console.log("device status updated");
+          }
+        );
+      }
+    );
+  }, time);
+  setTimeout(async () => {
+    let device = await Device.findById(deviceId);
+    let chrg = await Charge.findById(chargeId);
+    if (device.inuse && chrg.status === "PENDING") {
+      chrg.status = "FAILED";
+      device.inuse = false;
+      await device.save();
+      await chrg.save();
+      clearTimeout(timer1);
+    }
+  }, 120000);
+};
 
 exports.chargesByDevice = async (req, res) => {
-    const deviceId = req.device._id;
-    const { limit, skip } = req.query;
-    const lim = parseInt(limit) || 10;
-    const skp = parseInt(skip) || 0;
-    try {
-        const charges = await Charge.find({ device: deviceId })
-            .populate("user", "name email phone")
-            .populate("device", "code location device_type")
-            .sort({ "createdAt": -1 })
-            .limit(lim)
-            .skip(skp);
+  const deviceId = req.device._id;
+  const { limit, skip } = req.query;
+  const lim = parseInt(limit) || 10;
+  const skp = parseInt(skip) || 0;
+  try {
+    const charges = await Charge.find({ device: deviceId })
+      .populate("user", "name email phone")
+      .populate("device", "code location device_type")
+      .sort({ createdAt: -1 })
+      .limit(lim)
+      .skip(skp);
 
-        res.status(200).json(charges);
-    } catch (err) {
-        res.status(400).json({
-            message: errorHandler(err)
-        })
-    }
-}
+    res.status(200).json(charges);
+  } catch (err) {
+    res.status(400).json({
+      message: errorHandler(err),
+    });
+  }
+};
+
+exports.statusCount = async (req, res) => {
+  try {
+    const userId = req.profile._id;
+    const pipeline = [
+      {
+        $match: {
+          owner: ObjectId(userId),
+        },
+      },
+      {
+        $lookup: {
+          from: "charges",
+          localField: "_id",
+          foreignField: "device",
+          as: "charges",
+        },
+      },
+      {
+        $unwind: {
+          path: "$charges",
+          preserveNullAndEmptyArrays: false,
+        },
+      },
+      {
+        $group: {
+          _id: "$charges.status",
+          count: {
+            $sum: 1,
+          },
+        },
+      },
+    ];
+
+    const chargeStatusCount = await Device.aggregate(pipeline).exec();
+    return res.json(chargeStatusCount);
+  } catch (err) {
+    return res.status(400).json({
+      message: "Something Went Wrong",
+    });
+  }
+};
 exports.list = async (req, res) => {
-    const { limit, skip } = req.query;
-    const lim = parseInt(limit) || 10;
-    const skp = parseInt(skip) || 0;
-    let count = await Charge.countDocuments({})
-    Charge.find({})
-        .populate("user", "name email phone")
-        .populate("device", "code location device_type")
-        .sort({ "createdAt": -1 })
-        .limit(lim)
-        .skip(skp)
-        .exec((err, chargings) => {
-            if (err || !chargings) {
-                return res.status(400).json({
-                    message: errorHandler(err)
-                })
-            }
-            res.status(200).json({
-                total: count,
-                chargings: chargings
-            })
-        })
-}
+  const { limit, skip } = req.query;
+  const lim = parseInt(limit) || 10;
+  const skp = parseInt(skip) || 0;
+  let count = await Charge.countDocuments({});
+  Charge.find({})
+    .populate("user", "name email phone")
+    .populate("device", "code location device_type")
+    .sort({ createdAt: -1 })
+    .limit(lim)
+    .skip(skp)
+    .exec((err, chargings) => {
+      if (err || !chargings) {
+        return res.status(400).json({
+          message: errorHandler(err),
+        });
+      }
+      res.status(200).json({
+        total: count,
+        chargings: chargings,
+      });
+    });
+};
 
 exports.listChargeByUser = async (req, res) => {
-    const { limit, skip } = req.query;
-    const lim = parseInt(limit) || 10;
-    const skp = parseInt(skip) || 0;
-    let count = await Charge.countDocuments({ user: req.profile._id })
-    Charge.find({ user: req.profile._id })
-        .populate("user", "name email phone")
-        .populate("device", "code location device_type")
-        .sort({ "createdAt": -1 })
-        .limit(lim)
-        .skip(skp)
-        .exec((err, chargings) => {
-            if (err || !chargings) {
-                return res.status(400).json({
-                    message: errorHandler(err)
-                })
-            }
-            res.status(200).json({
-                total: count,
-                chargings: chargings
-            })
-        })
-}
-exports.sendMessage = async (req, res) => {
-    const { device, chargeId } = req.body;
-    const dvc = await Device.findById(device);
-    if (!dvc.gsm) {
+  const { limit, skip } = req.query;
+  const lim = parseInt(limit) || 10;
+  const skp = parseInt(skip) || 0;
+  let count = await Charge.countDocuments({ user: req.profile._id });
+  Charge.find({ user: req.profile._id })
+    .populate("user", "name email phone")
+    .populate("device", "code location device_type")
+    .sort({ createdAt: -1 })
+    .limit(lim)
+    .skip(skp)
+    .exec((err, chargings) => {
+      if (err || !chargings) {
         return res.status(400).json({
-            message: 'Device is not of type GSM'
-        })
-    }
-    let msgBody = chargeId;
-    //twilio send Sms
-    client.messages
-        .create({
-            body: msgBody,
-            from: phoneNumber, to: `+91${dvc.gsm}`
-        })
-        .then((response) => {
-            return res.status(200).json({
-                message: `OTP Sent Success`,
-                success: true,
-            })
-        }).catch((err) => {
-            return res.status(400).json({
-                message: `OTP Sending Failed`,
-                success: false,
-            })
-        })
-}
+          message: errorHandler(err),
+        });
+      }
+      res.status(200).json({
+        total: count,
+        chargings: chargings,
+      });
+    });
+};
+exports.sendMessage = async (req, res) => {
+  const { device, chargeId } = req.body;
+  const dvc = await Device.findById(device);
+  if (!dvc.gsm) {
+    return res.status(400).json({
+      message: "Device is not of type GSM",
+    });
+  }
+  let msgBody = chargeId;
+  //twilio send Sms
+  client.messages
+    .create({
+      body: msgBody,
+      from: phoneNumber,
+      to: `+91${dvc.gsm}`,
+    })
+    .then((response) => {
+      return res.status(200).json({
+        message: `OTP Sent Success`,
+        success: true,
+      });
+    })
+    .catch((err) => {
+      return res.status(400).json({
+        message: `OTP Sending Failed`,
+        success: false,
+      });
+    });
+};
 
 exports.create = async (req, res) => {
-    const { device, user, time, email } = req.body;
-    const dvc = await Device.findById(device).populate("owner");
-    let member = false;
-    if (dvc?.privacy) {
-        if (dvc?.members.includes(email) || dvc.owner?.email == email) {
-            member = true;
-        } else {
-            return res.status(400).json({
-                message: 'This is a private device'
-            })
-        }
+  const { device, user, time, email } = req.body;
+  const dvc = await Device.findById(device).populate("owner");
+  let member = false;
+  if (dvc?.privacy) {
+    if (dvc?.members.includes(email) || dvc.owner?.email == email) {
+      member = true;
+    } else {
+      return res.status(400).json({
+        message: "This is a private device",
+      });
     }
-    let amount = member ? 0 : Number((Number((Number(time) / 60000)/60) * dvc.rate).toFixed(2));
-    const alreadyReq = await Charge.findOne({
-        device: device, user: user, $or: [
-            { status: 'PENDING' },
-            { status: 'CHARGING' }
-        ]
+  }
+  let amount = member
+    ? 0
+    : Number((Number(Number(time) / 60000 / 60) * dvc.rate).toFixed(2));
+  const alreadyReq = await Charge.findOne({
+    device: device,
+    user: user,
+    $or: [{ status: "PENDING" }, { status: "CHARGING" }],
+  });
+  if (alreadyReq) {
+    return res.status(400).json({
+      message: "Already a request is pending",
     });
-    if (alreadyReq) {
-        return res.status(400).json({
-            message: "Already a request is pending"
-        })
+  }
+  const chargesCount = await Charge.countDocuments({});
+  const sequence =
+    String(new Date().getFullYear()) + String(10 ** 6 + chargesCount + 1);
+  const chargeDoc = new Charge({
+    device,
+    user,
+    amount,
+    deviceCode: dvc.code,
+    id: sequence,
+    time: new Date(Date.now() + time),
+  });
+  chargeDoc.save((err, charged) => {
+    if (err || !charged) {
+      console.log(err);
+      return res.status(400).json({
+        message: errorHandler(err),
+      });
     }
-    const chargesCount = await Charge.countDocuments({});
-    const sequence = String(new Date().getFullYear()) + String(10 ** 6 + chargesCount + 1);
-    const chargeDoc = new Charge({
-        device,
-        user,
-        amount,
-        deviceCode: dvc.code,
-        id: sequence,
-        time: new Date(Date.now() + time)
-    });
-    chargeDoc.save((err, charged) => {
-        if (err || !charged) {
-            console.log(err)
-            return res.status(400).json({
-                message: errorHandler(err)
-            })
+    Device.findByIdAndUpdate(
+      device,
+      {
+        inuse: true,
+      },
+      (err, chargingDevice) => {
+        if (err || !chargingDevice) {
+          return res.status(400).json({
+            message: errorHandler(err),
+          });
         }
-        Device.findByIdAndUpdate(device, {
-            inuse: true
-        }, (err, chargingDevice) => {
-            if (err || !chargingDevice) {
-                return res.status(400).json({
-                    message: errorHandler(err)
-                })
-            }
-            updateStatus(chargingDevice._id, charged._id, time);
+        updateStatus(chargingDevice._id, charged._id, time);
 
-            return res.status(200).json(charged);
-        })
+        return res.status(200).json(charged);
+      }
+    );
+  });
+};
+
+exports.updatePower = async (req, res) => {
+  try {
+    const { id, power } = req.body;
+    const charge = await Charge.findOne({ id });
+    if (charge) {
+      charge.powerUsed = power;
+      await charge.save();
+      return res.status(200).json(true);
+    } else {
+      return res.status(400).json({
+        message: "Not a valid id",
+      });
+    }
+  } catch (err) {
+    return res.status(400).json({
+      message: err,
+    });
+  }
+};
+
+exports.updatePowerV2 = async (req, res) => {
+  try {
+    const { code, power } = req.body;
+    const charges = await Charge.find({
+      deviceCode: code,
     })
-}
-
-exports.updatePower = async(req, res) => {
-    try{
-        const { id , power  } = req.body;
-        const charge = await Charge.findOne({id});
-        if(charge){
-            charge.powerUsed = power;
-            await charge.save();
-            return res.status(200).json(true);
-        }else{
-            return res.status(400).json({
-                message:'Not a valid id'
-            })
-        }
-    }catch(err){
-        return res.status(400).json({
-            message:err
-        })
+      .sort({
+        createdAt: -1,
+      })
+      .limit(1);
+    if (charges && !!charges.length) {
+      let _charge = charges[0];
+      if (!_charge.powerUsed || power > _charge.powerUsed) {
+        _charge.powerUsed = power;
+        await _charge.save();
+        return res.status(200).json({
+          message: "Power Updated",
+        });
+      } else {
+        res.status(400).json({
+          message: "Power Already have higher value",
+        });
+      }
+    } else {
+      return res.status(400).json({
+        message: "Charge Not Found",
+      });
     }
-}
+  } catch (err) {
+    return res.status(400).json({
+      message: err,
+    });
+  }
+};
 
-exports.updatePowerV2 = async(req, res) => {
-    try{
-        const { code , power  } = req.body;
-        const charges = await Charge.find({
-            deviceCode:code
-        }).sort({
-            createdAt:-1
-        }).limit(1);
-        if(charges && !!charges.length){
-            let _charge = charges[0];
-            if(!_charge.powerUsed || power>_charge.powerUsed){
-                _charge.powerUsed = power;
-                await _charge.save();
-                return res.status(200).json({
-                    message:"Power Updated"
-                });
-            }else{
-                res.status(400).json({
-                    message:"Power Already have higher value"
-                })
-            }
-        }else{
-            return res.status(400).json({
-                message:'Charge Not Found'
-            })
-        }
-    }catch(err){
-        return res.status(400).json({
-            message:err
-        })
-    }
-}
-
-exports.getMonthStats = async(req, res) => {
-    try{
-        const { deviceCode='KOL221' } = req.body;
-        const pipeline = [{
-            $match: {
-             deviceCode: deviceCode,
-             $or:[
-                {
-                  status:'CHARGED'
-                },
-                {
-                  status:'CANCELED'
-                }]
-            }
-           }, {
-            $group: {
-             _id: {
-              month: {
-               $month: '$createdAt'
+exports.getMonthStats = async (req, res) => {
+  try {
+    const { deviceCode = "KOL221" } = req.body;
+    const pipeline = [
+      {
+        $match: {
+          deviceCode: deviceCode,
+          $or: [
+            {
+              status: "CHARGED",
+            },
+            {
+              status: "CANCELED",
+            },
+          ],
+        },
+      },
+      {
+        $group: {
+          _id: {
+            month: {
+              $month: "$createdAt",
+            },
+            year: {
+              $year: "$createdAt",
+            },
+          },
+          charges: {
+            $sum: 1,
+          },
+          amount: {
+            $sum: "$amount",
+          },
+        },
+      },
+      {
+        $addFields: {
+          date: {
+            $concat: [
+              {
+                $substr: ["$_id.year", 0, -1],
               },
-              year: {
-               $year: '$createdAt'
-              }
-             },
-             charges: {
-              $sum: 1
-             },
-             amount: {
-              $sum: '$amount'
-             }
-            }
-           }, {
-            $addFields: {
-             date: {
-              $concat: [
-               {
-                $substr: [
-                 '$_id.year',
-                 0,
-                 -1
-                ]
-               },
-               '-',
-               {
-                $substr: [
-                 '$_id.month',
-                 0,
-                 -1
-                ]
-               },
-               '-',
-               '01'
-              ]
-             },
-             month: {
-              $let: {
-               vars: {
+              "-",
+              {
+                $substr: ["$_id.month", 0, -1],
+              },
+              "-",
+              "01",
+            ],
+          },
+          month: {
+            $let: {
+              vars: {
                 monthsInString: [
-                 '',
-                 'Jan',
-                 'Feb',
-                 'Mar',
-                 'Apr',
-                 'May',
-                 'Jun',
-                 'Jul',
-                 'Aug',
-                 'Sep',
-                 'Oct',
-                 'Nov',
-                 'Dec'
-                ]
-               },
-               'in': {
-                $arrayElemAt: [
-                 '$$monthsInString',
-                 '$_id.month'
-                ]
-               }
-              }
-             }
-            }
-           }, {
-            $addFields: {
-             dat: {
-              $toDate: '$date'
-             },
-             month: {
-              $concat: [
-               '$month',
-               '-',
-               {
-                $substr: [
-                 '$_id.year',
-                 0,
-                 -1
-                ]
-               }
-              ]
-             }
-            }
-           }, {
-            $sort: {
-             dat: 1
-            }
-           }, {
-            $project: {
-             charges: 1,
-             amount: 1,
-             month: 1
-            }
-           }]
+                  "",
+                  "Jan",
+                  "Feb",
+                  "Mar",
+                  "Apr",
+                  "May",
+                  "Jun",
+                  "Jul",
+                  "Aug",
+                  "Sep",
+                  "Oct",
+                  "Nov",
+                  "Dec",
+                ],
+              },
+              in: {
+                $arrayElemAt: ["$$monthsInString", "$_id.month"],
+              },
+            },
+          },
+        },
+      },
+      {
+        $addFields: {
+          dat: {
+            $toDate: "$date",
+          },
+          month: {
+            $concat: [
+              "$month",
+              "-",
+              {
+                $substr: ["$_id.year", 0, -1],
+              },
+            ],
+          },
+        },
+      },
+      {
+        $sort: {
+          dat: 1,
+        },
+      },
+      {
+        $project: {
+          charges: 1,
+          amount: 1,
+          month: 1,
+        },
+      },
+    ];
 
-        const data = await Charge.aggregate(pipeline);
-        return res.status(200).json(data);
-    }catch(err){
-        return res.status(400).json({
-            message:err
-        })
-    }
-}
-exports.getYearStats = async(req, res) => {
-    try{
-        const { deviceCode='KOL221' } = req.body;
-        const pipeline = [{
-            $match: {
-             deviceCode: deviceCode,
-             $or:[
-                {
-                  status:'CHARGED'
-                },
-                {
-                  status:'CANCELED'
-                }]
-            }
-           }, {
-            $group: {
-             _id: {
-              $year: '$createdAt'
-             },
-             charges: {
-              $sum: 1
-             },
-             amount: {
-              $sum: '$amount'
-             }
-            }
-           }, {
-            $sort: {
-             _id: 1
-            }
-           }]
+    const data = await Charge.aggregate(pipeline);
+    return res.status(200).json(data);
+  } catch (err) {
+    return res.status(400).json({
+      message: err,
+    });
+  }
+};
+exports.getYearStats = async (req, res) => {
+  try {
+    const { deviceCode = "KOL221" } = req.body;
+    const pipeline = [
+      {
+        $match: {
+          deviceCode: deviceCode,
+          $or: [
+            {
+              status: "CHARGED",
+            },
+            {
+              status: "CANCELED",
+            },
+          ],
+        },
+      },
+      {
+        $group: {
+          _id: {
+            $year: "$createdAt",
+          },
+          charges: {
+            $sum: 1,
+          },
+          amount: {
+            $sum: "$amount",
+          },
+        },
+      },
+      {
+        $sort: {
+          _id: 1,
+        },
+      },
+    ];
 
-        const data = await Charge.aggregate(pipeline);
-        return res.status(200).json(data);
-    }catch(err){
-        return res.status(400).json({
-            message:err
-        })
-    }
-}
+    const data = await Charge.aggregate(pipeline);
+    return res.status(200).json(data);
+  } catch (err) {
+    return res.status(400).json({
+      message: err,
+    });
+  }
+};
 
 // exports.confirm = async(req,res) => {
 //     const {id} = req.body;
@@ -484,71 +541,77 @@ exports.getYearStats = async(req, res) => {
 // }
 
 exports.isConfirm = async (req, res) => {
-    try {
-        let charge = await Charge.findById(req.params.chargeId);
-        if (charge.confirm) {
-            let remainingTime = charge.time - Date.now();
-            if (remainingTime > 0) return res.status(200).json(remainingTime);
-            else return res.status(200).json(0);
-        }
-        return res.status(400).json(false);
-    } catch (err) {
-        return res.status(400).json({
-            message: 'Something Went Wrong'
-        });
+  try {
+    let charge = await Charge.findById(req.params.chargeId);
+    if (charge.confirm) {
+      let remainingTime = charge.time - Date.now();
+      if (remainingTime > 0) return res.status(200).json(remainingTime);
+      else return res.status(200).json(0);
     }
-}
+    return res.status(400).json(false);
+  } catch (err) {
+    return res.status(400).json({
+      message: "Something Went Wrong",
+    });
+  }
+};
 
 exports.getAllChargingChargers = async (req, res) => {
-    Charge.find({ status: 'CHARGING' }).exec((err, chargers) => {
-        if (err || !chargers) {
-            return res.status(400).json({
-                message: errorHandler(err)
-            })
-        }
-        return res.status(200).json(chargers);
-    })
-}
+  Charge.find({ status: "CHARGING" }).exec((err, chargers) => {
+    if (err || !chargers) {
+      return res.status(400).json({
+        message: errorHandler(err),
+      });
+    }
+    return res.status(200).json(chargers);
+  });
+};
 
 exports.getChargeById = async (req, res, next, id) => {
-    try {
-        const charge = await Charge.findById(id);
-        req.charge = charge;
-        next();
-    } catch (err) {
-        return res.status(400).json({
-            message: 'Charge not Found'
-        })
-    }
-}
+  try {
+    const charge = await Charge.findById(id);
+    req.charge = charge;
+    next();
+  } catch (err) {
+    return res.status(400).json({
+      message: "Charge not Found",
+    });
+  }
+};
 
 exports.cancelChargeById = async (req, res) => {
-    try {
-        let charge = req.charge;
-        charge.status = 'CANCELED';
-        if (charge.time - (Date.now()) > 0) {
-            let updatedCharge = await charge.save();
-            await Device.findByIdAndUpdate(charge.device, {
-                inuse: false
-            }, { new: true });
-            return res.status(200).json(updatedCharge);
-        } else {
-            return res.status(400).json({
-                message: 'Already Charged'
-            })
-        }
-
-    } catch (err) {
-        return res.status(400).json({
-            message: 'Unable to cancel your request'
-        })
+  try {
+    let charge = req.charge;
+    charge.status = "CANCELED";
+    if (charge.time - Date.now() > 0) {
+      let updatedCharge = await charge.save();
+      await Device.findByIdAndUpdate(
+        charge.device,
+        {
+          inuse: false,
+        },
+        { new: true }
+      );
+      return res.status(200).json(updatedCharge);
+    } else {
+      return res.status(400).json({
+        message: "Already Charged",
+      });
     }
-}
+  } catch (err) {
+    return res.status(400).json({
+      message: "Unable to cancel your request",
+    });
+  }
+};
 
 exports.isChargeCanceled = async (req, res) => {
-    if (req.charge.status === 'CANCELED' && (req.charge.time - (new Date(req.charge.createdAt).getTime()))) {
-        return res.status(200).json(true);
-    } else {
-        return res.status(400).json(false);
-    }
-}
+  if (
+    req.charge.status === "CANCELED" &&
+    req.charge.time - new Date(req.charge.createdAt).getTime()
+  ) {
+    return res.status(200).json(true);
+  } else {
+    return res.status(400).json(false);
+  }
+};
