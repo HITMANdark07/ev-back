@@ -173,8 +173,8 @@ exports.getBestPerformingChargerPoints = async (req, res) => {
           revenue: {
             $sum: "$amount",
           },
-          total_charges: {
-            $sum: 1,
+          power_used: {
+            $sum: "$powerUsed",
           },
         },
       },
@@ -183,10 +183,13 @@ exports.getBestPerformingChargerPoints = async (req, res) => {
           profitRate: {
             $round: [
               {
-                $divide: ["$revenue", "$total_charges"],
+                $divide: ["$revenue", "$power_used"],
               },
               2,
             ],
+          },
+          total_power: {
+            $round: ["$power_used", 2],
           },
         },
       },
@@ -200,6 +203,7 @@ exports.getBestPerformingChargerPoints = async (req, res) => {
           device_code: "$device.code",
           total_revenue: "$revenue",
           profit_rate: "$profitRate",
+          total_power: 1,
         },
       },
       {
