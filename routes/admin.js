@@ -5,7 +5,6 @@ const {
   getTotalRevenue,
   getRevenueDataByMonth,
   getBestPerformingChargerPoints,
-  correctPowerUseValue,
 } = require("../controllers/admin");
 const { userById, requireSignin, isAdmin } = require("../controllers/user");
 const { findDeviceById } = require("../controllers/devices");
