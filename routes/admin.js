@@ -5,6 +5,7 @@ const {
   getTotalRevenue,
   getRevenueDataByMonth,
   getBestPerformingChargerPoints,
+  getPowerAndRevenueByMonth,
 } = require("../controllers/admin");
 const { userById, requireSignin, isAdmin } = require("../controllers/user");
 const { findDeviceById } = require("../controllers/devices");
@@ -17,6 +18,12 @@ router.get(
   requireSignin,
   isAdmin,
   getBestPerformingChargerPoints
+);
+router.get(
+  "/power-vs-revenue",
+  requireSignin,
+  isAdmin,
+  getPowerAndRevenueByMonth
 );
 
 router.param("deviceId", findDeviceById);

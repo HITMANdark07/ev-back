@@ -218,3 +218,90 @@ exports.getBestPerformingChargerPoints = async (req, res) => {
     });
   }
 };
+
+exports.getPowerAndRevenueByMonth = async (req, res) => {
+  try {
+    const pipeline = [
+      {
+        $match: {
+          confirm: true,
+        },
+      },
+      {
+        $group: {
+          _id: {
+            month: {
+              $month: "$createdAt",
+            },
+            year: {
+              $year: "$createdAt",
+            },
+          },
+          total_revenue: {
+            $sum: "$amount",
+          },
+          total_power: {
+            $sum: "$powerUsed",
+          },
+        },
+      },
+      {
+        $addFields: {
+          month: {
+            $concat: [
+              {
+                $let: {
+                  vars: {
+                    monthInString: [
+                      "",
+                      "Jan",
+                      "Feb",
+                      "Mar",
+                      "Apr",
+                      "May",
+                      "Jun",
+                      "Jul",
+                      "Aug",
+                      "Sep",
+                      "Oct",
+                      "Nov",
+                      "Dec",
+                    ],
+                  },
+                  in: {
+                    $arrayElemAt: ["$$monthInString", "$_id.month"],
+                  },
+                },
+              },
+              "-",
+              {
+                $substr: ["$_id.year", 0, -1],
+              },
+            ],
+          },
+        },
+      },
+      {
+        $sort: {
+          "_id.year": -1,
+          "_id.month": -1,
+        },
+      },
+      {
+        $project: {
+          total_revenue: 1,
+          total_power: 2,
+          date: "$month",
+          year: "$_id.year",
+          month: "$_id.month",
+        },
+      },
+    ];
+    const data = await Charge.aggregate(pipeline);
+    return res.status(200).json(data);
+  } catch (err) {
+    return res.status(400).json({
+      message: "Something went wrong",
+    });
+  }
+};
