@@ -305,3 +305,114 @@ exports.getPowerAndRevenueByMonth = async (req, res) => {
     });
   }
 };
+
+exports.chargesTransactions = async (req, res) => {
+  try {
+    const skip = parseInt(req.query.skip) || 0;
+    const limit = parseInt(req.query.limit) || 10;
+    const pipeline = [
+      {
+        $lookup: {
+          from: "users",
+          localField: "user",
+          foreignField: "_id",
+          as: "client",
+        },
+      },
+      {
+        $unwind: {
+          path: "$client",
+          preserveNullAndEmptyArrays: false,
+        },
+      },
+      {
+        $sort: {
+          createdAt: -1,
+        },
+      },
+      {
+        $skip: skip,
+      },
+      {
+        $limit: limit,
+      },
+    ];
+    const charges = await Charge.aggregate(pipeline).exec();
+    return res.status(200).json(charges);
+  } catch (err) {
+    return res.status(400).json({
+      message: "Something Went Wrong",
+    });
+  }
+};
+
+exports.chargeBoxes = async (req, res) => {
+  try {
+    const total_power_pipline = [
+      {
+        $match: {
+          $or: [
+            {
+              status: "CHARGED",
+            },
+            {
+              status: "CANCELED",
+            },
+          ],
+        },
+      },
+      {
+        $group: {
+          _id: "",
+          total_power: {
+            $sum: "$powerUsed",
+          },
+        },
+      },
+    ];
+    const power = await Charge.aggregate(total_power_pipline).exec();
+    const total_power = power[0].total_power;
+    const total_transactions = await Charge.count({
+      $or: [
+        {
+          status: "CHARGED",
+        },
+        {
+          status: "CANCELED",
+        },
+      ],
+    });
+    const devices = await Device.count({
+      isDeleted: false,
+    });
+    return res.status(200).json({
+      total_power,
+      transactions: total_transactions,
+      device_count: devices,
+    });
+  } catch (err) {
+    return res.status(400).json({
+      message: "Something Went Wrong",
+    });
+  }
+};
+
+exports.deviceDetails = async (req, res) => {
+  try {
+    const skip = parseInt(req.query.skip) || 0;
+    const limit = parseInt(req.query.limit) || 10;
+    const Devices = await Device.find({
+      isDeleted: false,
+    })
+      .sort({
+        createdAt: -1,
+      })
+      .skip(skip)
+      .limit(limit);
+    return res.status(200).json(Devices);
+  } catch (err) {
+    return res.status(400).json({
+      message: "Something Went Wrong",
+    });
+  }
+};
