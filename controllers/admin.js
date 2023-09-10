@@ -460,3 +460,55 @@ exports.getPowerUsedByYear = async (req, res) => {
     });
   }
 };
+
+exports.getChargingSessionsCategoryCount = async (req, res) => {
+  try {
+    const pipeline = [
+      {
+        $group: {
+          _id: "$status",
+          total: { $sum: 1 },
+        },
+      },
+    ];
+    const data = await Charge.aggregate(pipeline).exec();
+    return res.status(200).json(data);
+  } catch (err) {
+    console.log(err);
+    return res.status(400).json({
+      message: "Something Went Wrong",
+    });
+  }
+};
+
+exports.getSuccessFullTransactionCount = async (req, res) => {
+  try {
+    const data = await Charge.count({
+      confirm: true,
+    });
+    return res.status(200).json({
+      transaction_count: data,
+    });
+  } catch (err) {
+    console.log(err);
+    return res.status(400).json({
+      message: "Something Went Wrong",
+    });
+  }
+};
+
+exports.getTotalDevices = async (req, res) => {
+  try {
+    const data = await Device.count({
+      isDeleted: false,
+    });
+    return res.status(200).json({
+      device_count: data,
+    });
+  } catch (err) {
+    console.log(err);
+    return res.status(400).json({
+      message: "Something Went Wrong",
+    });
+  }
+};

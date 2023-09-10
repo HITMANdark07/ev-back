@@ -11,6 +11,9 @@ const {
   deviceDetails,
   getRevenueByYear,
   getPowerUsedByYear,
+  getChargingSessionsCategoryCount,
+  getSuccessFullTransactionCount,
+  getTotalDevices,
 } = require("../controllers/admin");
 const { userById, requireSignin, isAdmin } = require("../controllers/user");
 const { findDeviceById } = require("../controllers/devices");
@@ -20,6 +23,19 @@ router.get("/total-revenue", requireSignin, isAdmin, getTotalRevenue);
 router.get("/revenue-bymonth", requireSignin, isAdmin, getRevenueDataByMonth);
 router.get("/revenue-byyear", requireSignin, isAdmin, getRevenueByYear);
 router.get("/power-byyear", requireSignin, isAdmin, getPowerUsedByYear);
+router.get(
+  "/charging-sessions",
+  requireSignin,
+  isAdmin,
+  getChargingSessionsCategoryCount
+);
+router.get(
+  "/transaction-count",
+  requireSignin,
+  isAdmin,
+  getSuccessFullTransactionCount
+);
+router.get("/total-devices", requireSignin, isAdmin, getTotalDevices);
 router.get(
   "/best-performing",
   requireSignin,
