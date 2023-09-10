@@ -438,3 +438,25 @@ exports.getRevenueByYear = async (req, res) => {
     });
   }
 };
+
+exports.getPowerUsedByYear = async (req, res) => {
+  try {
+    const pipeline = [
+      { $match: { confirm: true } },
+      {
+        $group: {
+          _id: { year: { $year: "$createdAt" } },
+          power: { $sum: "$powerUsed" },
+        },
+      },
+      { $addFields: { year: "$_id.year" } },
+    ];
+    const data = await Charge.aggregate(pipeline).exec();
+    return res.status(200).json(data);
+  } catch (err) {
+    console.log(err);
+    return res.status(400).json({
+      message: "Something went wrong",
+    });
+  }
+};
