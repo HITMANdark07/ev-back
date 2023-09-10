@@ -14,6 +14,7 @@ const {
   getChargingSessionsCategoryCount,
   getSuccessFullTransactionCount,
   getTotalDevices,
+  getOperatorsWithDeviceData,
 } = require("../controllers/admin");
 const { userById, requireSignin, isAdmin } = require("../controllers/user");
 const { findDeviceById } = require("../controllers/devices");
@@ -47,6 +48,12 @@ router.get(
   requireSignin,
   isAdmin,
   getPowerAndRevenueByMonth
+);
+router.get(
+  "/operators-with-devices",
+  requireSignin,
+  isAdmin,
+  getOperatorsWithDeviceData
 );
 router.get("/charges", requireSignin, isAdmin, chargesTransactions);
 

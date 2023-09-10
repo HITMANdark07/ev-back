@@ -512,3 +512,73 @@ exports.getTotalDevices = async (req, res) => {
     });
   }
 };
+
+exports.getOperatorsWithDeviceData = async (req, res) => {
+  try {
+    const pipeline = [
+      { $match: { confirm: true } },
+      {
+        $lookup: {
+          from: "devices",
+          localField: "device",
+          foreignField: "_id",
+          as: "chargebox",
+        },
+      },
+      {
+        $unwind: {
+          path: "$chargebox",
+          preserveNullAndEmptyArrays: false,
+        },
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "chargebox.owner",
+          foreignField: "_id",
+          as: "owner",
+        },
+      },
+      {
+        $unwind: {
+          path: "$owner",
+          preserveNullAndEmptyArrays: false,
+        },
+      },
+      {
+        $group: {
+          _id: "$chargebox._id",
+          device_id: { $first: "$chargebox._id" },
+          deviceCode: { $first: "$deviceCode" },
+          owner: { $first: "$owner" },
+          power: { $sum: "$powerUsed" },
+          revenue: { $sum: "$amount" },
+        },
+      },
+      {
+        $group: {
+          _id: "$owner._id",
+          name: { $first: "$owner.name" },
+          email: { $first: "$owner.email" },
+          photo: { $first: "$owner.photo" },
+          balance: { $first: "$owner.balance" },
+          devices: {
+            $push: {
+              deviceCode: "$deviceCode",
+              device_id: "$device_id",
+              power: "$power",
+              revenue: "$revenue",
+            },
+          },
+        },
+      },
+    ];
+    const data = await Charge.aggregate(pipeline).exec();
+    return res.status(200).json(data);
+  } catch (err) {
+    console.log(err);
+    return res.status(400).json({
+      message: "Something Went Wrong",
+    });
+  }
+};
