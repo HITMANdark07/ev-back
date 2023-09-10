@@ -9,6 +9,7 @@ const {
   chargesTransactions,
   chargeBoxes,
   deviceDetails,
+  getRevenueByYear,
 } = require("../controllers/admin");
 const { userById, requireSignin, isAdmin } = require("../controllers/user");
 const { findDeviceById } = require("../controllers/devices");
@@ -16,6 +17,7 @@ const { findDeviceById } = require("../controllers/devices");
 router.get("/today-revenue", requireSignin, isAdmin, getTodayRevenue);
 router.get("/total-revenue", requireSignin, isAdmin, getTotalRevenue);
 router.get("/revenue-bymonth", requireSignin, isAdmin, getRevenueDataByMonth);
+router.get("/revenue-byyear", requireSignin, isAdmin, getRevenueByYear);
 router.get(
   "/best-performing",
   requireSignin,
