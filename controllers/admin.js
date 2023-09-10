@@ -582,3 +582,67 @@ exports.getOperatorsWithDeviceData = async (req, res) => {
     });
   }
 };
+
+exports.getStationData = async (req, res) => {
+  try {
+    const pipeline = [
+      { $match: { confirm: true } },
+      {
+        $lookup: {
+          from: "devices",
+          localField: "device",
+          foreignField: "_id",
+          as: "device",
+        },
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "device.owner",
+          foreignField: "_id",
+          as: "owner",
+        },
+      },
+      {
+        $group: {
+          _id: "$deviceCode",
+          power: { $sum: "$powerUsed" },
+          revenue: { $sum: "$amount" },
+          device: { $first: "$device" },
+          owner: { $first: "$owner" },
+        },
+      },
+      {
+        $unwind: {
+          path: "$device",
+          preserveNullAndEmptyArrays: false,
+        },
+      },
+      {
+        $unwind: {
+          path: "$owner",
+          preserveNullAndEmptyArrays: false,
+        },
+      },
+      {
+        $project: {
+          power: 1,
+          revenue: 1,
+          device: {
+            code: 1,
+            location: { lat: 1, lng: 1 },
+            rate: 1,
+          },
+          owner: { name: 1, email: 1, photo: 1 },
+        },
+      },
+    ];
+    const data = await Charge.aggregate(pipeline);
+    return res.status(200).json(data);
+  } catch (err) {
+    console.log(err);
+    return res.status(400).json({
+      message: "Something Went Wrong",
+    });
+  }
+};
