@@ -629,6 +629,7 @@ exports.getStationData = async (req, res) => {
           power: 1,
           revenue: 1,
           device: {
+            _id: 1,
             code: 1,
             location: { lat: 1, lng: 1 },
             rate: 1,
